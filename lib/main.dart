@@ -29,7 +29,7 @@ Future<void> main() async {
   // ✅ Inicializa Firebase con soporte multiplataforma
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  print("🚫 Firebase App Check desactivado para entorno de desarrollo.");
+  debugPrint("🚫 Firebase App Check desactivado para entorno de desarrollo.");
 
   // 🔹 Inicializa modelos TFLite al arrancar la app
   try {

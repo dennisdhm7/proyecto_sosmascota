@@ -63,6 +63,7 @@ class _VideoRecortePageState extends State<VideoRecortePage> {
                         startValue: _startValue,
                         endValue: _endValue,
                         onSave: (outputPath) async {
+                          final safeContext = context;
                           if (outputPath != null) {
                             final fileClip = File(outputPath);
 
@@ -70,14 +71,13 @@ class _VideoRecortePageState extends State<VideoRecortePage> {
                             final url = await vm.subirVideo(fileClip);
                             vm.agregarVideo(url);
 
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Video recortado y guardado ✅"),
-                                ),
-                              );
-                              Navigator.pop(context);
-                            }
+                            if (!safeContext.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Video recortado y guardado ✅"),
+                              ),
+                            );
+                            Navigator.pop(safeContext);
                           }
                         },
                       );

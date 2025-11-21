@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
@@ -40,8 +41,8 @@ class ServicioTFLite {
     final etiqueta = etiquetas[pred];
     final confianza = maxValor;
 
-    print("🔍 Salida del modelo: $output");
-    print(
+    debugPrint("🔍 Salida del modelo: $output");
+    debugPrint(
       "🐾 Clase predicha: $etiqueta (${(confianza * 100).toStringAsFixed(2)}%)",
     );
 

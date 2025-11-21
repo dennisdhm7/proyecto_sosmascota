@@ -40,19 +40,34 @@ class _PantallaVerificaEmailState extends State<PantallaVerificaEmail> {
 
   Future<void> _reenviar() async {
     if (cooldown > 0) return;
+
     setState(() => reenviando = true);
+
+    // ✔ Guardamos el contexto ANTES del await
+    final messenger = ScaffoldMessenger.of(context);
+
     try {
       await AuthServicio().reenviarVerificacion();
-      ScaffoldMessenger.of(context).showSnackBar(
+
+      // ✔ Verificación de contexto DESPUÉS del await
+      if (!mounted) return;
+
+      messenger.showSnackBar(
         const SnackBar(content: Text('Correo de verificación reenviado.')),
       );
+
       _startCooldown();
     } catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+
+      messenger.showSnackBar(
         const SnackBar(content: Text('No se pudo reenviar. Intente luego.')),
       );
     }
-    setState(() => reenviando = false);
+
+    if (mounted) {
+      setState(() => reenviando = false);
+    }
   }
 
   Future<void> _yaVerifique() async {

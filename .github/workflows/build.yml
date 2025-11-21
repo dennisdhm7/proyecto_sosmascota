@@ -1,0 +1,46 @@
+name: Analisis SonarCloud y Tests
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Importante para que Sonar pueda comparar versiones
+
+      # 1. Instalar Java 17 (Requerido por el escáner de Sonar)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'zulu'
+
+      # 2. Instalar Flutter (TU VERSIÓN EXACTA)
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.35.2' # ✅ Actualizado a tu versión local
+
+      # 3. Descargar librerías del proyecto
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 4. Ejecutar TODOS tus tests y generar el archivo lcov.info
+      - name: Run Tests with Coverage
+        run: flutter test --coverage
+
+      # 5. Enviar el reporte a SonarCloud
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:sos_mascotas/modelo/notificacion.dart';
@@ -38,7 +39,7 @@ class NotificacionServicio {
       // 1️⃣ Leer credenciales del archivo JSON
       final contenido = await rootBundle.loadString(_jsonKeyPath);
       final jsonKey = jsonDecode(contenido);
-      print("✅ Credenciales cargadas ($_jsonKeyPath)");
+      debugPrint("✅ Credenciales cargadas ($_jsonKeyPath)");
 
       // 2️⃣ Crear cliente autorizado para FCM
       final serviceAccount = ServiceAccountCredentials.fromJson(
@@ -65,7 +66,7 @@ class NotificacionServicio {
         body: jsonEncode(message),
       );
 
-      print('📨 FCM respuesta: ${response.statusCode} → ${response.body}');
+      debugPrint('📨 FCM respuesta: ${response.statusCode} → ${response.body}');
       client.close();
 
       // 5️⃣ Guardar las notificaciones en Firestore (de forma eficiente)
@@ -103,11 +104,11 @@ class NotificacionServicio {
       }
 
       await batch.commit();
-      print(
+      debugPrint(
         "✅ Notificaciones registradas correctamente para ${usuariosSnap.docs.length + 1} usuarios.",
       );
     } catch (e) {
-      print("❌ Error en enviarPush: $e");
+      debugPrint("❌ Error en enviarPush: $e");
     }
   }
 
@@ -143,7 +144,7 @@ class NotificacionServicio {
         body: jsonEncode(message),
       );
 
-      print(
+      debugPrint(
         '📩 Push individual enviado → ${response.statusCode}: ${response.body}',
       );
       client.close();
@@ -157,9 +158,9 @@ class NotificacionServicio {
         'leido': false,
       });
 
-      print("✅ Notificación individual guardada para $usuarioId");
+      debugPrint("✅ Notificación individual guardada para $usuarioId");
     } catch (e) {
-      print("❌ Error enviando notificación individual: $e");
+      debugPrint("❌ Error enviando notificación individual: $e");
     }
   }
 }

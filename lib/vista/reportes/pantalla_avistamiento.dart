@@ -102,27 +102,34 @@ class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
                       children: [
                         ElevatedButton.icon(
                           onPressed: () async {
+                            final safeContext = context;
                             final picked = await picker.pickImage(
                               source: ImageSource.camera,
                             );
                             if (picked != null) {
                               final file = File(picked.path);
-                              setState(() => imagenesSeleccionadas.add(file));
+                              if (safeContext.mounted) {
+                                setState(() => imagenesSeleccionadas.add(file));
+                              }
                               try {
                                 final url = await vm.subirFoto(file);
                                 vm.avistamiento.foto = url;
                               } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      e.toString().replaceAll(
-                                        "Exception: ",
-                                        "",
+                                if (safeContext.mounted) {
+                                  ScaffoldMessenger.of(
+                                    safeContext,
+                                  ).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        e.toString().replaceAll(
+                                          "Exception: ",
+                                          "",
+                                        ),
                                       ),
+                                      backgroundColor: Colors.redAccent,
                                     ),
-                                    backgroundColor: Colors.redAccent,
-                                  ),
-                                );
+                                  );
+                                }
                               }
                             }
                           },
@@ -144,27 +151,46 @@ class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
                         const SizedBox(width: 12),
                         ElevatedButton.icon(
                           onPressed: () async {
+                            final safeContext = context;
                             final picked = await picker.pickImage(
                               source: ImageSource.gallery,
                             );
                             if (picked != null) {
                               final file = File(picked.path);
-                              setState(() => imagenesSeleccionadas.add(file));
+                              if (safeContext.mounted) {
+                                setState(() => imagenesSeleccionadas.add(file));
+                              }
                               try {
                                 final url = await vm.subirFoto(file);
                                 vm.avistamiento.foto = url;
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      e.toString().replaceAll(
-                                        "Exception: ",
-                                        "",
+                                if (safeContext.mounted) {
+                                  ScaffoldMessenger.of(
+                                    safeContext,
+                                  ).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Imagen subida correctamente",
                                       ),
+                                      backgroundColor: Colors.green,
                                     ),
-                                    backgroundColor: Colors.redAccent,
-                                  ),
-                                );
+                                  );
+                                }
+                              } catch (e) {
+                                if (safeContext.mounted) {
+                                  ScaffoldMessenger.of(
+                                    safeContext,
+                                  ).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        e.toString().replaceAll(
+                                          "Exception: ",
+                                          "",
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.redAccent,
+                                    ),
+                                  );
+                                }
                               }
                             }
                           },
@@ -338,23 +364,28 @@ class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
                   onTap: vm.cargando
                       ? null
                       : () async {
+                          final safeContext = context;
                           if (!formKey.currentState!.validate()) return;
 
                           if (vm.avistamiento.foto.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Debes subir una foto antes de guardar.",
+                            if (safeContext.mounted) {
+                              ScaffoldMessenger.of(safeContext).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Debes subir una foto antes de guardar.",
+                                  ),
+                                  backgroundColor: Colors.redAccent,
                                 ),
-                                backgroundColor: Colors.redAccent,
-                              ),
-                            );
+                              );
+                            }
                             return;
                           }
 
                           final ok = await vm.guardarAvistamiento();
+
+                          if (!safeContext.mounted) return;
                           if (ok && mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            ScaffoldMessenger.of(safeContext).showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   "✅ Avistamiento guardado correctamente.",
@@ -362,7 +393,7 @@ class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
                                 backgroundColor: Colors.green,
                               ),
                             );
-                            Navigator.pop(context);
+                            Navigator.pop(safeContext);
                           }
                         },
                   child: AnimatedContainer(
@@ -378,7 +409,7 @@ class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.orange.withOpacity(0.3),
+                          color: Colors.orange.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),

@@ -154,14 +154,16 @@ class AvistamientoVM extends ChangeNotifier {
           (data["longitud"] ?? 0).toDouble(),
         );
 
-        print("📍 Distancia con ${doc.id}: ${distancia.toStringAsFixed(2)} km");
+        debugPrint(
+          "📍 Distancia con ${doc.id}: ${distancia.toStringAsFixed(2)} km",
+        );
 
         // Si está a más de 9 km, descartar
         if (distancia > 9.0) continue;
 
         // Descargar imágenes y comparar localmente
         final similitud = await _compararImagenes(av.foto, fotos.first);
-        print("🤖 Similitud con ${doc.id}: $similitud");
+        debugPrint("🤖 Similitud con ${doc.id}: $similitud");
 
         if (similitud >= 0.5) {
           await FirebaseFirestore.instance
@@ -172,12 +174,12 @@ class AvistamientoVM extends ChangeNotifier {
           final usuarioId = data["usuarioId"];
           await _notificarCoincidencia(usuarioId, av.id);
 
-          print("✅ Avistamiento vinculado con reporte ${doc.id}");
+          debugPrint("✅ Avistamiento vinculado con reporte ${doc.id}");
           break;
         }
       }
     } catch (e) {
-      print("⚠️ Error al buscar coincidencias: $e");
+      debugPrint("⚠️ Error al buscar coincidencias: $e");
     }
   }
 

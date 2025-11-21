@@ -14,12 +14,10 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       final vm = context.read<NotificacionVM>();
       vm.escucharNotificaciones();
-
-      // ✅ Marca todas como leídas al abrir la pantalla
-      await vm.marcarTodasComoLeidas();
+      vm.marcarTodasComoLeidas();
     });
   }
 

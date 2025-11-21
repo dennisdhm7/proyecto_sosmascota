@@ -45,8 +45,9 @@ class LoginVM extends ChangeNotifier {
 
   // Este método es útil para tests unitarios puros que no usan UI
   Future<bool> login() async {
-    if (formKey.currentState != null && !formKey.currentState!.validate())
+    if (formKey.currentState != null && !formKey.currentState!.validate()) {
       return false;
+    }
     cargando = true;
     error = null;
     notifyListeners();
@@ -82,9 +83,9 @@ class LoginVM extends ChangeNotifier {
 
   Future<String?> loginYDeterminarRuta() async {
     // Validación segura para tests (evita crash si formKey no está atada)
-    if (formKey.currentState != null && !formKey.currentState!.validate())
+    if (formKey.currentState != null && !formKey.currentState!.validate()) {
       return null;
-
+    }
     cargando = true;
     error = null;
     notifyListeners();

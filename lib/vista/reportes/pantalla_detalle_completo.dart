@@ -59,15 +59,18 @@ class _PantallaDetalleCompletoState extends State<PantallaDetalleCompleto> {
   }
 
   Future<void> _abrirChat() async {
+    final safeContext = context;
     final user = FirebaseAuth.instance.currentUser!;
     final publicadorId = widget.data["usuarioId"];
     final reporteId = widget.data["id"];
     final tipo = widget.tipo;
 
     if (publicadorId == user.uid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No puedes chatear contigo mismo.")),
-      );
+      if (safeContext.mounted) {
+        ScaffoldMessenger.of(safeContext).showSnackBar(
+          const SnackBar(content: Text("No puedes chatear contigo mismo.")),
+        );
+      }
       return;
     }
 
@@ -95,21 +98,19 @@ class _PantallaDetalleCompletoState extends State<PantallaDetalleCompleto> {
           });
       chatId = nuevoChat.id;
     }
-
-    if (context.mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PantallaChat(
-            chatId: chatId,
-            reporteId: reporteId,
-            tipo: tipo,
-            publicadorId: publicadorId,
-            usuarioId: user.uid,
-          ),
+    if (!safeContext.mounted) return;
+    Navigator.push(
+      safeContext,
+      MaterialPageRoute(
+        builder: (_) => PantallaChat(
+          chatId: chatId,
+          reporteId: reporteId,
+          tipo: tipo,
+          publicadorId: publicadorId,
+          usuarioId: user.uid,
         ),
-      );
-    }
+      ),
+    );
   }
 
   Color _colorPorEstado(String estado) {

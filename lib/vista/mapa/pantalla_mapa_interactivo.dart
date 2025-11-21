@@ -59,12 +59,16 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
 
   Future<void> _abrirChat() async {
     if (_seleccionado == null) return;
+
+    final safeContext = context;
+
     final user = FirebaseAuth.instance.currentUser!;
     final publicadorId = _seleccionado!["usuarioId"];
     final reporteId = _seleccionado!["id"];
 
     if (publicadorId == user.uid) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!safeContext.mounted) return;
+      ScaffoldMessenger.of(safeContext).showSnackBar(
         const SnackBar(content: Text("No puedes chatear contigo mismo.")),
       );
       return;
@@ -95,20 +99,20 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
       chatId = nuevoChat.id;
     }
 
-    if (context.mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PantallaChat(
-            chatId: chatId,
-            reporteId: reporteId,
-            tipo: _tipoSeleccionado,
-            publicadorId: publicadorId,
-            usuarioId: user.uid,
-          ),
+    if (!safeContext.mounted) return;
+
+    Navigator.push(
+      safeContext,
+      MaterialPageRoute(
+        builder: (_) => PantallaChat(
+          chatId: chatId,
+          reporteId: reporteId,
+          tipo: _tipoSeleccionado,
+          publicadorId: publicadorId,
+          usuarioId: user.uid,
         ),
-      );
-    }
+      ),
+    );
   }
 
   void _mostrarInfo(Map<String, dynamic> punto) {
@@ -155,11 +159,12 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
                         markers: _puntos.map((punto) {
                           final lat = punto["latitud"];
                           final lng = punto["longitud"];
-                          if (lat == null || lng == null)
+                          if (lat == null || lng == null) {
                             return const Marker(
                               point: LatLng(0, 0),
                               child: SizedBox(),
                             );
+                          }
 
                           final esReporte = punto["tipo"] == "reporte";
                           final color = esReporte
@@ -229,7 +234,7 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),

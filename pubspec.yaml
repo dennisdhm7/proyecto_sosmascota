@@ -39,7 +39,7 @@ dependencies:
   lottie: ^3.1.0
   tflite_flutter: ^0.11.0
   google_sign_in: ^5.4.0
-  share_plus: ^12.0.1
+  share_plus: ^10.1.4
   pdf: ^3.11.3
   open_file: ^3.3.2
   flutter_launcher_icons: ^0.14.4

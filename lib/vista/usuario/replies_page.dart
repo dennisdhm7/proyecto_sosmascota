@@ -32,6 +32,7 @@ class _RepliesPageState extends State<RepliesPage> {
       .collection('respuestas');
 
   Future<void> _pickImage() async {
+    final ctx = context;
     try {
       final XFile? picked = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -44,8 +45,8 @@ class _RepliesPageState extends State<RepliesPage> {
         });
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
           SnackBar(content: Text('Error al seleccionar imagen: $e')),
         );
       }
@@ -67,6 +68,7 @@ class _RepliesPageState extends State<RepliesPage> {
   }
 
   Future<void> _sendReply() async {
+    final safeContext = context;
     final text = _ctrl.text.trim();
     if (text.isEmpty && _media == null) return;
     setState(() => _sending = true);
@@ -113,8 +115,8 @@ class _RepliesPageState extends State<RepliesPage> {
         _mediaPreviewPath = null;
       });
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (safeContext.mounted) {
+        ScaffoldMessenger.of(safeContext).showSnackBar(
           SnackBar(content: Text('Error al enviar respuesta: $e')),
         );
       }
@@ -170,7 +172,7 @@ class _RepliesPageState extends State<RepliesPage> {
                     final texto = data['texto'] ?? '';
                     final autor = data['autor'] ?? 'Anónimo';
                     final ts = data['fecha'] as Timestamp?;
-                    final fecha = ts != null ? ts.toDate() : null;
+                    final fecha = ts?.toDate();
                     final mediaUrl = data['mediaUrl'] as String?;
                     final likes = List<String>.from(data['likes'] ?? []);
                     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -279,12 +281,15 @@ class _RepliesPageState extends State<RepliesPage> {
                                     Icons.share,
                                     color: Colors.grey,
                                   ),
-                                  onPressed: () {
+                                  onPressed: () async {
                                     final sb = StringBuffer()..write(texto);
                                     if (mediaUrl != null) {
                                       sb.writeln('\n$mediaUrl');
                                     }
-                                    Share.share(sb.toString());
+                                    await Share.share(
+                                      sb.toString(),
+                                      subject: 'Compartir',
+                                    );
                                   },
                                 ),
                               ],

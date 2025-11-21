@@ -157,13 +157,15 @@ class Paso1Mascota extends StatelessWidget {
                   GestureDetector(
                     onTap: () async {
                       final picker = ImagePicker();
+                      final safeContext = context;
                       final picked = await picker.pickImage(
                         source: ImageSource.gallery,
                       );
 
                       if (picked != null) {
                         try {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          if (!safeContext.mounted) return;
+                          ScaffoldMessenger.of(safeContext).showSnackBar(
                             const SnackBar(
                               content: Text("Analizando imagen... 🧠"),
                               backgroundColor: Colors.blueAccent,
@@ -173,8 +175,8 @@ class Paso1Mascota extends StatelessWidget {
 
                           final url = await vm.subirFoto(File(picked.path));
                           vm.agregarFoto(url);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          if (!safeContext.mounted) return;
+                          ScaffoldMessenger.of(safeContext).showSnackBar(
                             const SnackBar(
                               content: Text(
                                 "✅ Imagen válida detectada y subida correctamente.",
@@ -183,7 +185,8 @@ class Paso1Mascota extends StatelessWidget {
                             ),
                           );
                         } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          if (!safeContext.mounted) return;
+                          ScaffoldMessenger.of(safeContext).showSnackBar(
                             SnackBar(
                               content: Text(
                                 e.toString().replaceAll("Exception: ", ""),
@@ -251,13 +254,15 @@ class Paso1Mascota extends StatelessWidget {
                       ElevatedButton.icon(
                         onPressed: () async {
                           final picker = ImagePicker();
+                          final safeContext = context;
                           final picked = await picker.pickImage(
                             source: ImageSource.camera,
                           );
                           if (picked == null) return;
 
                           try {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            if (!safeContext.mounted) return;
+                            ScaffoldMessenger.of(safeContext).showSnackBar(
                               const SnackBar(
                                 content: Text("Analizando imagen... 🧠"),
                                 backgroundColor: Colors.blueAccent,
@@ -267,8 +272,8 @@ class Paso1Mascota extends StatelessWidget {
 
                             final url = await vm.subirFoto(File(picked.path));
                             vm.agregarFoto(url);
-
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            if (!safeContext.mounted) return;
+                            ScaffoldMessenger.of(safeContext).showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   "✅ Imagen válida detectada y subida correctamente.",
@@ -277,7 +282,8 @@ class Paso1Mascota extends StatelessWidget {
                               ),
                             );
                           } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            if (!safeContext.mounted) return;
+                            ScaffoldMessenger.of(safeContext).showSnackBar(
                               SnackBar(
                                 content: Text(
                                   e.toString().replaceAll("Exception: ", ""),
@@ -310,13 +316,15 @@ class Paso1Mascota extends StatelessWidget {
                       ElevatedButton.icon(
                         onPressed: () async {
                           final picker = ImagePicker();
+                          final safeContext = context;
                           final picked = await picker.pickImage(
                             source: ImageSource.gallery,
                           );
                           if (picked == null) return;
 
                           try {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            if (!safeContext.mounted) return;
+                            ScaffoldMessenger.of(safeContext).showSnackBar(
                               const SnackBar(
                                 content: Text("Analizando imagen... 🧠"),
                                 backgroundColor: Colors.blueAccent,
@@ -326,8 +334,8 @@ class Paso1Mascota extends StatelessWidget {
 
                             final url = await vm.subirFoto(File(picked.path));
                             vm.agregarFoto(url);
-
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            if (!safeContext.mounted) return;
+                            ScaffoldMessenger.of(safeContext).showSnackBar(
                               const SnackBar(
                                 content: Text(
                                   "✅ Imagen válida detectada y subida correctamente.",
@@ -336,6 +344,7 @@ class Paso1Mascota extends StatelessWidget {
                               ),
                             );
                           } catch (e) {
+                            if (!safeContext.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
@@ -907,7 +916,7 @@ Widget _gradientNavButton(String text, {VoidCallback? onTap}) =>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6366F1).withOpacity(0.3),
+              color: const Color(0xFF6366F1).withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),

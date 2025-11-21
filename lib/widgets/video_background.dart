@@ -48,14 +48,10 @@ class _VideoBackgroundState extends State<VideoBackground> {
                   ),
                 ),
                 // Capa semitransparente para bajar brillo
-                Container(
-                  color: Colors.black.withOpacity(0.35),
-                ),
+                Container(color: Colors.black.withValues(alpha: 0.35)),
               ],
             )
-          : Container(
-              color: Colors.black.withOpacity(0.4),
-            ),
+          : Container(color: Colors.black.withValues(alpha: 0.4)),
     );
   }
 }

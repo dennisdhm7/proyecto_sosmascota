@@ -98,7 +98,7 @@ class _ListaReportes extends StatelessWidget {
         ],
       ),
     );
-
+    final safeContext = context;
     if (confirmar == true) {
       try {
         final collection = tipo == "reporte"
@@ -108,15 +108,16 @@ class _ListaReportes extends StatelessWidget {
             .collection(collection)
             .doc(docId)
             .update({"estado": nuevoEstado});
-
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!safeContext.mounted) return;
+        ScaffoldMessenger.of(safeContext).showSnackBar(
           SnackBar(
             content: Text("Estado cambiado a '$nuevoEstado'."),
             backgroundColor: Colors.green,
           ),
         );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!safeContext.mounted) return;
+        ScaffoldMessenger.of(safeContext).showSnackBar(
           SnackBar(
             content: Text("Error al cambiar estado: $e"),
             backgroundColor: Colors.redAccent,
@@ -198,6 +199,7 @@ class _ListaReportes extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
+              final safeContext = context;
               try {
                 final collection = tipo == "reporte"
                     ? "reportes_mascotas"
@@ -213,16 +215,17 @@ class _ListaReportes extends StatelessWidget {
                       "direccion": direccionCtrl.text,
                       "descripcion": descripcionCtrl.text,
                     });
-
+                if (!safeContext.mounted) return;
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
+                ScaffoldMessenger.of(safeContext).showSnackBar(
                   const SnackBar(
                     content: Text("Cambios guardados correctamente."),
                     backgroundColor: Colors.green,
                   ),
                 );
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                if (!safeContext.mounted) return;
+                ScaffoldMessenger.of(safeContext).showSnackBar(
                   SnackBar(
                     content: Text("Error al guardar: $e"),
                     backgroundColor: Colors.redAccent,
@@ -309,7 +312,7 @@ class _ListaReportes extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 6,
                       offset: const Offset(0, 3),
                     ),
@@ -365,7 +368,7 @@ class _ListaReportes extends StatelessWidget {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: colorEstado.withOpacity(0.1),
+                                    color: colorEstado.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(color: colorEstado),
                                   ),
@@ -382,7 +385,7 @@ class _ListaReportes extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              "${data["tipo"] ?? "Mascota"} • ${raza}",
+                              "${data["tipo"] ?? "Mascota"} • $raza",
                               style: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 14,

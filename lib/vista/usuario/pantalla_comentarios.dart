@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'replies_page.dart';
-import '../../modelo/comentario_model.dart';
-import '../../vistamodelo/comentarios/comentarios_viewmodel.dart';
 
 class PantallaComentarios extends StatefulWidget {
   const PantallaComentarios({super.key});
@@ -61,20 +59,23 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
   }
 
   Future<void> _pickImage() async {
+    final safeContext = context;
     try {
       final picked = await _picker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1600,
       );
       if (picked != null) {
+        if (!mounted) return;
         setState(() {
           _media = picked;
           _mediaPreviewPath = picked.path;
         });
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (!safeContext.mounted) return;
+      {
+        ScaffoldMessenger.of(safeContext).showSnackBar(
           SnackBar(content: Text('Error al seleccionar imagen: $e')),
         );
       }
@@ -94,6 +95,7 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
   }
 
   Future<void> _eliminarComentario(String docId, String? mediaUrl) async {
+    final safeContext = context;
     try {
       // eliminar subcolección de respuestas
       final replies = await _comentariosRef
@@ -107,18 +109,22 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
       // eliminar imagen asociada si hay
       if (mediaUrl != null && mediaUrl.isNotEmpty) {
         try {
-          final ref = await FirebaseStorage.instance.refFromURL(mediaUrl);
+          final ref = FirebaseStorage.instance.refFromURL(mediaUrl);
           await ref.delete();
         } catch (_) {}
       }
 
       await _comentariosRef.doc(docId).delete();
+      if (!safeContext.mounted) return;
+
       ScaffoldMessenger.of(
-        context,
+        safeContext,
       ).showSnackBar(const SnackBar(content: Text('Comentario eliminado')));
     } catch (e) {
+      if (!safeContext.mounted) return;
+
       ScaffoldMessenger.of(
-        context,
+        safeContext,
       ).showSnackBar(SnackBar(content: Text('Error al eliminar: $e')));
     }
   }
@@ -166,16 +172,19 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
         _media = null;
         _mediaPreviewPath = null;
       });
-
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Comentario enviado')));
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      setState(() => _enviando = false);
+      if (mounted) {
+        setState(() => _enviando = false);
+      }
     }
   }
 
