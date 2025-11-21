@@ -52,7 +52,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.organization=dennisdhm7
+            -Dsonar.organization=cdhm
             -Dsonar.projectKey=dennisdhm7_proyecto_sosmascota
             -Dsonar.sources=lib
             -Dsonar.tests=test
