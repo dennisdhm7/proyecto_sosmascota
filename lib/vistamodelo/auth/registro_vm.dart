@@ -18,9 +18,21 @@ class RegistroVM extends ChangeNotifier {
   bool buscandoDni = false;
   String? error;
 
+  // 💉 DEPENDENCIAS INYECTABLES
   final ApiDniServicio apiDni;
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+  final FirebaseMessaging _messaging;
 
-  RegistroVM({required this.apiDni});
+  // Constructor actualizado para Tests
+  RegistroVM({
+    required this.apiDni,
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    FirebaseMessaging? messaging,
+  }) : _auth = auth ?? FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance,
+       _messaging = messaging ?? FirebaseMessaging.instance;
 
   /// 🔎 Buscar datos por DNI en la API
   Future<bool> buscarYAutocompletarNombre() async {
@@ -34,32 +46,40 @@ class RegistroVM extends ChangeNotifier {
     buscandoDni = true;
     notifyListeners();
 
-    final datos = await apiDni.consultarDni(dni);
+    try {
+      final datos = await apiDni.consultarDni(dni);
+      buscandoDni = false;
 
-    buscandoDni = false;
+      if (datos == null) {
+        error = "DNI no encontrado o error en el servicio";
+        notifyListeners();
+        return false;
+      }
 
-    if (datos == null) {
-      error = "DNI no encontrado o error en el servicio";
+      final nombreCompleto = [
+        datos['nombres'] ?? '',
+        datos['ape_paterno'] ?? '',
+        datos['ape_materno'] ?? '',
+      ].where((s) => s.toString().trim().isNotEmpty).join(' ');
+
+      nombreCtrl.text = nombreCompleto;
+      error = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      buscandoDni = false;
+      error = "Error de conexión";
       notifyListeners();
       return false;
     }
-
-    final nombreCompleto = [
-      datos['nombres'] ?? '',
-      datos['ape_paterno'] ?? '',
-      datos['ape_materno'] ?? '',
-    ].where((s) => s.toString().trim().isNotEmpty).join(' ');
-
-    nombreCtrl.text = nombreCompleto;
-
-    error = null;
-    notifyListeners();
-    return true;
   }
 
   /// 📝 Registrar usuario
   Future<bool> registrarUsuario() async {
-    if (!formKey.currentState!.validate()) return false;
+    // Validación segura para tests (si no hay UI, salta esto)
+    if (formKey.currentState != null && !formKey.currentState!.validate()) {
+      return false;
+    }
 
     cargando = true;
     error = null;
@@ -68,8 +88,8 @@ class RegistroVM extends ChangeNotifier {
     try {
       final dni = dniCtrl.text.trim();
 
-      // 1) Verificar duplicado por DNI
-      final query = await FirebaseFirestore.instance
+      // 1) Verificar duplicado por DNI usando la instancia inyectada
+      final query = await _firestore
           .collection("usuarios")
           .where("dni", isEqualTo: dni)
           .limit(1)
@@ -83,7 +103,7 @@ class RegistroVM extends ChangeNotifier {
       }
 
       // 2) Crear cuenta en Firebase Auth
-      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final cred = await _auth.createUserWithEmailAndPassword(
         email: correoCtrl.text.trim(),
         password: claveCtrl.text.trim(),
       );
@@ -105,23 +125,20 @@ class RegistroVM extends ChangeNotifier {
       );
 
       // 4) Guardar en Firestore
-      await FirebaseFirestore.instance
-          .collection("usuarios")
-          .doc(uid)
-          .set(usuario.toMap());
+      await _firestore.collection("usuarios").doc(uid).set(usuario.toMap());
 
-      // 🔥 Guardar token FCM del nuevo usuario
+      // 🔥 Guardar token FCM
       try {
-        final token = await FirebaseMessaging.instance.getToken();
+        final token = await _messaging.getToken();
         if (token != null) {
-          await FirebaseFirestore.instance
-              .collection('usuarios')
-              .doc(uid)
-              .update({'token': token});
+          await _firestore.collection('usuarios').doc(uid).update({
+            'token': token,
+          });
         }
       } catch (e) {
         debugPrint("Error guardando token FCM: $e");
       }
+
       // 5) Enviar verificación
       await cred.user?.sendEmailVerification();
 
@@ -137,5 +154,16 @@ class RegistroVM extends ChangeNotifier {
     cargando = false;
     notifyListeners();
     return false;
+  }
+
+  @override
+  void dispose() {
+    // Añadimos dispose para limpieza correcta
+    nombreCtrl.dispose();
+    correoCtrl.dispose();
+    telefonoCtrl.dispose();
+    claveCtrl.dispose();
+    dniCtrl.dispose();
+    super.dispose();
   }
 }

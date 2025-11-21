@@ -84,7 +84,7 @@ class PantallaRecuperar extends StatelessWidget {
                         ),
                         onPressed: vm.enviando
                             ? null
-                            : () => vm.enviarCorreo(context),
+                            : () => vm.enviarCorreo(context: context),
                         child: vm.enviando
                             ? const SizedBox(
                                 width: 20,
