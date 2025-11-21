@@ -50,3 +50,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=dennisdhm7
+            -Dsonar.projectKey=dennisdhm7_proyecto_sosmascota
+            -Dsonar.sources=lib
+            -Dsonar.tests=test
+            -Dsonar.flutter.coverage.reportPath=coverage/lcov.info
+            -Dsonar.exclusions=test/**/*,lib/**/*.g.dart,lib/firebase_options.dart
