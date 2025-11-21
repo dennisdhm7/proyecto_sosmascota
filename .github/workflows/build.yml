@@ -49,12 +49,12 @@ jobs:
 
       # 5. Enviar el reporte a SonarCloud
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          args: >
+          sonar_args: >
             -Dsonar.organization=cdhm
             -Dsonar.projectKey=dennisdhm7_proyecto_sosmascota
             -Dsonar.sources=lib
