@@ -34,6 +34,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # Crear un archivo JSON falso para que el build no falle
+      - name: Create Dummy Service Account
+        run: |
+          mkdir -p assets/keys
+          echo '{}' > assets/keys/service_account.json
+
       # 4. Ejecutar TODOS tus tests y generar el archivo lcov.info
       - name: Run Tests with Coverage
         run: flutter test --coverage
