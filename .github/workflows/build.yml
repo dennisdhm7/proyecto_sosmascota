@@ -66,5 +66,6 @@ jobs:
             "-Dsonar.projectKey=dennisdhm7_proyecto_sosmascota"
             "-Dsonar.sources=lib"
             "-Dsonar.tests=test"
+            "-Dsonar.dart.lcov.reportPaths=coverage/lcov.info"
             "-Dsonar.coverage.reportPaths=coverage/lcov.info"
             "-Dsonar.exclusions=test/**/*,lib/**/*.g.dart,lib/firebase_options.dart"
