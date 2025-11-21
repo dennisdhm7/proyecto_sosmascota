@@ -24,8 +24,7 @@ import 'vistamodelo/auth/login_vm.dart';
 import 'servicios/api_dni_servicio.dart';
 import 'vistamodelo/usuario/perfil_vm.dart';
 
-final String bearer =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyOTUsImV4cCI6MTc1ODIzOTQxMX0.wX7JTrLUVGXvotDn376U462eIwzlA3PgzcM3sQ-mVX8";
+const String bearer = String.fromEnvironment('API_TOKEN', defaultValue: '');
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {

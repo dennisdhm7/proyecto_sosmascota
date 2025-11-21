@@ -42,7 +42,7 @@ jobs:
 
       # 4. Ejecutar TODOS tus tests y generar el archivo lcov.info
       - name: Run Tests with Coverage
-        run: flutter test --coverage
+        run: flutter test --coverage --dart-define=API_TOKEN="${{ secrets.API_TOKEN }}"
 
       # 5. Enviar el reporte a SonarCloud
       - name: SonarCloud Scan
@@ -56,5 +56,5 @@ jobs:
             -Dsonar.projectKey=dennisdhm7_proyecto_sosmascota
             -Dsonar.sources=lib
             -Dsonar.tests=test
-            -Dsonar.flutter.coverage.reportPath=coverage/lcov.info
+            -Dsonar.coverage.reportPaths=coverage/lcov.info
             -Dsonar.exclusions=test/**/*,lib/**/*.g.dart,lib/firebase_options.dart
