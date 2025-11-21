@@ -41,20 +41,23 @@ jobs:
           echo '{}' > assets/keys/service_account.json
 
       # 4. Ejecutar TODOS tus tests y generar el archivo lcov.info
-      - name: Run Tests with Coverage
+      - name: Create Dummy Service Account
         run: |
-          flutter test --coverage --dart-define=API_TOKEN="${{ secrets.API_TOKEN }}"
-          # Truco: Reemplazar rutas relativas para que Sonar las entienda
-          sed -i 's|^SF:lib/|SF:lib/|g' coverage/lcov.info
+          mkdir -p assets/keys
+          echo '{}' > assets/keys/service_account.json
+
+      # Ejecutamos tests y generamos lcov.info
+      - name: Run Tests with Coverage
+        run: flutter test --coverage --dart-define=API_TOKEN="${{ secrets.API_TOKEN }}"
 
       # 5. Enviar el reporte a SonarCloud
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          sonar_args: >
+          args: >
             -Dsonar.organization=cdhm
             -Dsonar.projectKey=dennisdhm7_proyecto_sosmascota
             -Dsonar.sources=lib
