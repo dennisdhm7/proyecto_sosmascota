@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -497,6 +498,9 @@ class Paso1Mascota extends StatelessWidget {
   }
 }
 
+typedef DatePickerFn = Future<DateTime?> Function();
+typedef TimePickerFn = Future<TimeOfDay?> Function();
+
 /// 🔹 Paso 2: Ubicación
 class Paso2Ubicacion extends StatelessWidget {
   const Paso2Ubicacion({super.key});
@@ -527,13 +531,19 @@ class Paso2Ubicacion extends StatelessWidget {
                       "Fecha de pérdida",
                     ).copyWith(suffixIcon: const Icon(Icons.calendar_today)),
                     onTap: () async {
-                      final fecha = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                      );
-
+                      final vm = context.read<ReporteMascotaVM>();
+                      final safeContext = context;
+                      final fechaFn =
+                          Zone.current[#showDatePicker] as DatePickerFn?;
+                      final fecha = fechaFn != null
+                          ? await fechaFn()
+                          : await showDatePicker(
+                              context: safeContext,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
+                            );
+                      if (!safeContext.mounted) return;
                       if (fecha != null) {
                         // Guardar en el modelo y mostrar en el campo
                         vm.reporte.fechaPerdida =
@@ -552,10 +562,15 @@ class Paso2Ubicacion extends StatelessWidget {
                       "Hora aproximada",
                     ).copyWith(suffixIcon: const Icon(Icons.access_time)),
                     onTap: () async {
-                      final hora = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
+                      final horaFn =
+                          Zone.current[#showTimePicker] as TimePickerFn?;
+
+                      final hora = horaFn != null
+                          ? await horaFn()
+                          : await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.now(),
+                            );
                       if (hora != null) {
                         vm.reporte.horaPerdida =
                             "${hora.hour.toString().padLeft(2, '0')}:${hora.minute.toString().padLeft(2, '0')}";

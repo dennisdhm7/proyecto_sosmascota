@@ -71,6 +71,10 @@ void main() {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // PASO 1
+  // ---------------------------------------------------------------------------
+
   testWidgets('🟢 Debe iniciar en el Paso 1 y mostrar campos', (
     WidgetTester tester,
   ) async {
@@ -93,12 +97,11 @@ void main() {
       'Labrador',
     );
 
-    // ✅ SOLUCIÓN: Buscamos cualquier Dropdown, ignorando si es <String> o <dynamic>
+    // Dropdown Tipo de mascota
     final dropdownFinder = find.byWidgetPredicate(
       (widget) => widget is DropdownButtonFormField,
     );
 
-    // Hacemos scroll hasta verlo y lo tocamos
     await tester.dragUntilVisible(
       dropdownFinder,
       find.byType(SingleChildScrollView),
@@ -107,7 +110,6 @@ void main() {
     await tester.tap(dropdownFinder);
     await tester.pumpAndSettle();
 
-    // Seleccionamos la opción
     await tester.tap(find.text('🐶 Perro').last);
     await tester.pumpAndSettle();
 
@@ -140,7 +142,7 @@ void main() {
     );
     await tester.enterText(find.widgetWithText(TextFormField, 'Raza'), 'Pug');
 
-    // 2. Dropdown (Usando el buscador corregido)
+    // 2. Dropdown
     final dropdownFinder = find.byWidgetPredicate(
       (widget) => widget is DropdownButtonFormField,
     );
@@ -154,7 +156,7 @@ void main() {
     await tester.tap(find.text('🐶 Perro').last);
     await tester.pumpAndSettle();
 
-    // 3. Foto Falsa
+    // 3. Foto Falsa (ya subida en VM)
     viewModel.agregarFoto("https://foto-falsa.com/perro.jpg");
     await tester.pump();
 
@@ -172,6 +174,184 @@ void main() {
     expect(find.text('Paso 2 de 3'), findsOneWidget);
     expect(find.text('📍 Lugar y momento de pérdida'), findsOneWidget);
   });
+
+  // ---------------------------------------------------------------------------
+  // PASO 2
+  // ---------------------------------------------------------------------------
+
+  testWidgets('🟠 Paso 2 - No debe avanzar si faltan datos requeridos', (
+    WidgetTester tester,
+  ) async {
+    // Forzamos que el wizard comience en el Paso 2
+    viewModel.setPaso(1);
+
+    await cargarPantalla(tester);
+
+    // Confirmamos que estamos en Paso 2
+    expect(find.text('Paso 2 de 3'), findsOneWidget);
+    expect(find.text('📍 Lugar y momento de pérdida'), findsOneWidget);
+
+    // Botón Continuar
+    final btnContinuar = find.text('Continuar');
+    await tester.dragUntilVisible(
+      btnContinuar,
+      find.byType(SingleChildScrollView),
+      const Offset(0, -400),
+    );
+    await tester.tap(btnContinuar);
+    await tester.pumpAndSettle();
+
+    // Sigue en Paso 2
+    expect(find.text('Paso 2 de 3'), findsOneWidget);
+
+    // Mensajes de validación visibles
+    expect(find.text('Seleccione la fecha'), findsOneWidget);
+    expect(find.text('Seleccione la hora'), findsOneWidget);
+    expect(find.text('Ingrese la dirección'), findsOneWidget);
+    expect(find.text('Describa cómo se perdió'), findsOneWidget);
+  });
+
+  testWidgets('🟢 Paso 2 - Debe avanzar al Paso 3 si los datos son válidos', (
+    WidgetTester tester,
+  ) async {
+    // Preconfiguramos datos que se muestran con controllers
+    viewModel.reporte.fechaPerdida = "01/01/2025";
+    viewModel.reporte.horaPerdida = "10:30";
+    viewModel.reporte.direccion = "Av. Principal 123";
+    viewModel.reporte.distrito = "Tacna";
+    viewModel.setPaso(1); // Paso 2
+
+    await cargarPantalla(tester);
+
+    // Confirmamos que estamos en Paso 2
+    expect(find.text('Paso 2 de 3'), findsOneWidget);
+
+    // Campo "¿Cómo se perdió?" (requerido)
+    await tester.enterText(
+      find.widgetWithText(TextFormField, '¿Cómo se perdió?'),
+      'Se escapó por la puerta.',
+    );
+
+    // Botón Continuar
+    final btnContinuar = find.text('Continuar');
+    await tester.dragUntilVisible(
+      btnContinuar,
+      find.byType(SingleChildScrollView),
+      const Offset(0, -400),
+    );
+    await tester.tap(btnContinuar);
+    await tester.pumpAndSettle();
+
+    // Debe haber navegado al Paso 3
+    expect(find.text('Paso 3 de 3'), findsOneWidget);
+    expect(find.text('Resumen del reporte'), findsOneWidget);
+  });
+
+  testWidgets(
+    '🟡 Paso 2 → Debe seleccionar fecha desde showDatePicker y actualizar el modelo',
+    (WidgetTester tester) async {
+      // 1. Fecha que queremos simular como seleccionada
+      final fakeDate = DateTime(2025, 11, 20);
+
+      // 2. Correr en un Zone override para interceptar showDatePicker
+      await Zone.current
+          .fork(
+            zoneValues: {
+              #showDatePicker: () async =>
+                  fakeDate, // ← aquí devolvemos la fecha simulada
+            },
+          )
+          .run(() async {
+            await cargarPantalla(tester);
+
+            // Ir al paso 2
+            viewModel.setPaso(1);
+            await tester.pumpAndSettle();
+
+            // Buscar el campo "Fecha de pérdida"
+            final fechaField = find.widgetWithText(
+              TextFormField,
+              'Fecha de pérdida',
+            );
+
+            expect(fechaField, findsOneWidget);
+
+            // Tocar el campo
+            await tester.tap(fechaField);
+            await tester.pumpAndSettle();
+
+            // Verificar que el modelo se actualizó
+            expect(viewModel.reporte.fechaPerdida, "20/11/2025");
+          });
+    },
+  );
+
+  testWidgets(
+    '🟡 Paso 2 → Debe seleccionar hora desde showTimePicker y actualizar el modelo',
+    (WidgetTester tester) async {
+      // 1. Fijar valor esperado
+      final fakeTime = TimeOfDay(hour: 15, minute: 45);
+
+      // 2. Ejecutar dentro del Zone override
+      await Zone.current
+          .fork(zoneValues: {#showTimePicker: () async => fakeTime})
+          .run(() async {
+            await cargarPantalla(tester);
+
+            // Ir al Paso 2
+            viewModel.setPaso(1);
+            await tester.pumpAndSettle();
+
+            // Buscar campo de hora
+            final horaField = find.widgetWithText(
+              TextFormField,
+              'Hora aproximada',
+            );
+
+            expect(horaField, findsOneWidget);
+
+            // Tocar el campo
+            await tester.tap(horaField);
+            await tester.pumpAndSettle();
+
+            // Verificar que se actualizó el modelo
+            expect(viewModel.reporte.horaPerdida, "15:45");
+          });
+    },
+  );
+  // ---------------------------------------------------------------------------
+  // PASO 3
+  // ---------------------------------------------------------------------------
+
+  testWidgets('🔙 Paso 3 - Botón Atrás debe regresar al Paso 2', (
+    WidgetTester tester,
+  ) async {
+    // Configuramos el VM para que ya esté en Paso 3 con datos mínimos
+    viewModel.setPaso(2);
+    viewModel.reporte.nombre = "Toby";
+    viewModel.reporte.tipo = "Perro";
+    viewModel.reporte.raza = "Mestizo";
+    viewModel.reporte.fechaPerdida = "02/02/2025";
+    viewModel.reporte.horaPerdida = "12:00";
+    viewModel.reporte.direccion = "Calle Falsa 123";
+    viewModel.agregarFoto("https://foto-falsa.com/perro2.jpg");
+
+    await cargarPantalla(tester);
+
+    // Confirmamos que estamos en Paso 3
+    expect(find.text('Paso 3 de 3'), findsOneWidget);
+    expect(find.text('Resumen del reporte'), findsOneWidget);
+
+    // Botón Atrás
+    final btnAtras = find.text('Atrás');
+    await tester.tap(btnAtras);
+    await tester.pumpAndSettle();
+
+    // Ahora deberíamos estar en Paso 2
+    expect(find.text('Paso 2 de 3'), findsOneWidget);
+    expect(find.text('📍 Lugar y momento de pérdida'), findsOneWidget);
+  });
+
   testWidgets('🟣 Debe completar el Paso 3 y guardar el reporte', (
     WidgetTester tester,
   ) async {
@@ -183,9 +363,8 @@ void main() {
       mockFirestore.collection("reportes_mascotas"),
     ).thenReturn(mockCollection);
 
-    // ✅ CORRECCIÓN CLAVE: Mockeamos la llamada sin argumentos .doc()
+    // Mockeamos la llamada .doc()
     when(mockCollection.doc()).thenReturn(mockDocument);
-    // Por seguridad, mockeamos también si se llamara con argumentos
     when(mockCollection.doc(any)).thenReturn(mockDocument);
 
     when(mockDocument.id).thenReturn("reporte_final_123");
@@ -224,13 +403,15 @@ void main() {
     await tester.tap(btnGuardar);
 
     // 5. Verificar éxito
-    // Usamos pump() para procesar el microtask del Future y mostrar el SnackBar
     await tester.pump();
 
-    // Verificamos que aparezca el mensaje
     expect(find.text('✅ Reporte guardado con éxito'), findsOneWidget);
   });
 }
+
+// ---------------------------------------------------------------------------
+// HTTP Fakes para evitar errores al cargar imágenes en tests
+// ---------------------------------------------------------------------------
 
 class _FakeHttpOverrides extends HttpOverrides {
   @override
