@@ -4,12 +4,24 @@ import 'package:flutter/material.dart';
 import 'pantalla_chat.dart';
 
 class PantallaChatsActivos extends StatelessWidget {
-  const PantallaChatsActivos({super.key});
+  // 💉 INYECCIÓN DE DEPENDENCIAS
+  final FirebaseAuth? firebaseAuth;
+  final FirebaseFirestore? firestore;
+
+  const PantallaChatsActivos({super.key, this.firebaseAuth, this.firestore});
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser!;
-    final chatsRef = FirebaseFirestore.instance
+    // Usamos inyectados o reales
+    final auth = firebaseAuth ?? FirebaseAuth.instance;
+    final fs = firestore ?? FirebaseFirestore.instance;
+
+    final currentUser = auth.currentUser;
+    if (currentUser == null) {
+      return const Scaffold(body: Center(child: Text("No hay usuario")));
+    }
+
+    final chatsRef = fs
         .collection("chats")
         .where("usuarios", arrayContains: currentUser.uid);
 
@@ -44,10 +56,7 @@ class PantallaChatsActivos extends StatelessWidget {
                   : data["publicadorId"];
 
               return FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance
-                    .collection("usuarios")
-                    .doc(otherUserId)
-                    .get(),
+                future: fs.collection("usuarios").doc(otherUserId).get(),
                 builder: (context, userSnap) {
                   if (!userSnap.hasData) {
                     return const SizedBox();
@@ -60,7 +69,7 @@ class PantallaChatsActivos extends StatelessWidget {
                   final tipo = data["tipo"] ?? "reporte";
 
                   return StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
+                    stream: fs
                         .collection("chats")
                         .doc(chat.id)
                         .collection("mensajes")
@@ -135,6 +144,9 @@ class PantallaChatsActivos extends StatelessWidget {
                                   tipo: tipo,
                                   publicadorId: data["publicadorId"],
                                   usuarioId: data["usuarioId"],
+                                  // Pasamos los servicios para mantener la inyección
+                                  firebaseAuth: auth,
+                                  firebaseFirestore: fs,
                                 ),
                               ),
                             );

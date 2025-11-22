@@ -7,7 +7,11 @@ import '../chat/pantalla_chat.dart';
 import '../reportes/pantalla_detalle_completo.dart';
 
 class PantallaMapaInteractivo extends StatefulWidget {
-  const PantallaMapaInteractivo({super.key});
+  // 💉 Inyección de dependencias (Opcionales)
+  final FirebaseFirestore? firestore;
+  final FirebaseAuth? auth;
+
+  const PantallaMapaInteractivo({super.key, this.firestore, this.auth});
 
   @override
   State<PantallaMapaInteractivo> createState() =>
@@ -21,50 +25,67 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
   Map<String, dynamic>? _seleccionado;
   String _tipoSeleccionado = "";
 
+  // Variables locales para usar los servicios
+  late final FirebaseFirestore _fs;
+  late final FirebaseAuth _auth;
+
   @override
   void initState() {
     super.initState();
+    // 💉 Inicialización inteligente:
+    // Si el widget trae mocks, úsalos. Si no, usa los reales.
+    _fs = widget.firestore ?? FirebaseFirestore.instance;
+    _auth = widget.auth ?? FirebaseAuth.instance;
+
     _cargarDatos();
   }
 
   Future<void> _cargarDatos() async {
+    // Si el widget ya no está montado, no hacemos nada
+    if (!mounted) return;
     setState(() => _cargando = true);
+
     final List<Map<String, dynamic>> puntos = [];
 
-    final reportes = await FirebaseFirestore.instance
-        .collection("reportes_mascotas")
-        .get();
-    for (var doc in reportes.docs) {
-      final data = doc.data();
-      if (data["latitud"] != null && data["longitud"] != null) {
-        puntos.add({...data, "tipo": "reporte"});
+    try {
+      // Usamos _fs en lugar de la instancia estática
+      final reportes = await _fs.collection("reportes_mascotas").get();
+      for (var doc in reportes.docs) {
+        final data = doc.data();
+        if (data["latitud"] != null && data["longitud"] != null) {
+          puntos.add({...data, "tipo": "reporte", "id": doc.id});
+        }
       }
-    }
 
-    final avistamientos = await FirebaseFirestore.instance
-        .collection("avistamientos")
-        .get();
-    for (var doc in avistamientos.docs) {
-      final data = doc.data();
-      if (data["latitud"] != null && data["longitud"] != null) {
-        puntos.add({...data, "tipo": "avistamiento"});
+      final avistamientos = await _fs.collection("avistamientos").get();
+      for (var doc in avistamientos.docs) {
+        final data = doc.data();
+        if (data["latitud"] != null && data["longitud"] != null) {
+          puntos.add({...data, "tipo": "avistamiento", "id": doc.id});
+        }
       }
-    }
 
-    setState(() {
-      _puntos = puntos;
-      _cargando = false;
-    });
+      if (mounted) {
+        setState(() {
+          _puntos = puntos;
+          _cargando = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error cargando mapa: $e");
+      if (mounted) setState(() => _cargando = false);
+    }
   }
 
   Future<void> _abrirChat() async {
     if (_seleccionado == null) return;
-
     final safeContext = context;
 
-    final user = FirebaseAuth.instance.currentUser!;
+    final user = _auth.currentUser;
+    if (user == null) return;
+
     final publicadorId = _seleccionado!["usuarioId"];
-    final reporteId = _seleccionado!["id"];
+    final reporteId = _seleccionado!["id"]; // Ahora sí tenemos el ID asegurado
 
     if (publicadorId == user.uid) {
       if (!safeContext.mounted) return;
@@ -74,7 +95,7 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
       return;
     }
 
-    final chatExistente = await FirebaseFirestore.instance
+    final chatExistente = await _fs
         .collection("chats")
         .where("publicadorId", isEqualTo: publicadorId)
         .where("usuarioId", isEqualTo: user.uid)
@@ -86,16 +107,14 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
     if (chatExistente.docs.isNotEmpty) {
       chatId = chatExistente.docs.first.id;
     } else {
-      final nuevoChat = await FirebaseFirestore.instance
-          .collection("chats")
-          .add({
-            "reporteId": reporteId,
-            "tipo": _tipoSeleccionado,
-            "publicadorId": publicadorId,
-            "usuarioId": user.uid,
-            "usuarios": [publicadorId, user.uid],
-            "fechaInicio": FieldValue.serverTimestamp(),
-          });
+      final nuevoChat = await _fs.collection("chats").add({
+        "reporteId": reporteId,
+        "tipo": _tipoSeleccionado,
+        "publicadorId": publicadorId,
+        "usuarioId": user.uid,
+        "usuarios": [publicadorId, user.uid],
+        "fechaInicio": FieldValue.serverTimestamp(),
+      });
       chatId = nuevoChat.id;
     }
 
@@ -110,6 +129,9 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
           tipo: _tipoSeleccionado,
           publicadorId: publicadorId,
           usuarioId: user.uid,
+          // Pasamos las instancias para mantener la inyección
+          firebaseAuth: _auth,
+          firebaseFirestore: _fs,
         ),
       ),
     );
@@ -124,7 +146,8 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
 
   @override
   Widget build(BuildContext context) {
-    final paddingInferior = MediaQuery.of(context).viewPadding.bottom;
+    // Calculamos padding seguro para el panel inferior
+    final paddingInferior = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
@@ -136,6 +159,7 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
         ],
       ),
       body: SafeArea(
+        top: false, // Ya tenemos AppBar
         child: Stack(
           children: [
             _cargando
@@ -143,7 +167,7 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
                 : FlutterMap(
                     mapController: _mapController,
                     options: MapOptions(
-                      initialCenter: LatLng(-18.0066, -70.2463),
+                      initialCenter: const LatLng(-18.0066, -70.2463),
                       initialZoom: 13,
                       onTap: (tapPosition, point) {
                         setState(() => _seleccionado = null);
@@ -159,7 +183,9 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
                         markers: _puntos.map((punto) {
                           final lat = punto["latitud"];
                           final lng = punto["longitud"];
-                          if (lat == null || lng == null) {
+
+                          // Validación extra por seguridad
+                          if (lat is! num || lng is! num) {
                             return const Marker(
                               point: LatLng(0, 0),
                               child: SizedBox(),
@@ -174,7 +200,7 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
                           return Marker(
                             width: 50,
                             height: 50,
-                            point: LatLng(lat, lng),
+                            point: LatLng(lat.toDouble(), lng.toDouble()),
                             child: GestureDetector(
                               onTap: () => _mostrarInfo(punto),
                               child: Icon(
@@ -203,7 +229,6 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
         ? (fotos.isNotEmpty ? fotos.first : null)
         : (data["foto"] ?? "");
 
-    // Datos base
     final nombre = esReporte
         ? (data["nombre"] ?? "Mascota sin nombre")
         : (data["direccion"] ?? "Avistamiento");
@@ -211,9 +236,11 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
         ? (data["caracteristicas"] ?? "Sin descripción")
         : (data["descripcion"] ?? "Sin descripción");
     final direccion = data["direccion"] ?? "Zona no especificada";
-    final fecha = esReporte
-        ? (data["fechaPerdida"] ?? "")
-        : (data["fechaAvistamiento"] ?? "");
+    // Manejo seguro de fecha (puede venir como String o Timestamp)
+    final fechaRaw = esReporte
+        ? data["fechaPerdida"]
+        : data["fechaAvistamiento"];
+    final fecha = fechaRaw?.toString() ?? "";
 
     final color = esReporte ? Colors.blueAccent : Colors.orangeAccent;
 
@@ -243,17 +270,23 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cabecera con imagen y nombre
             Row(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: urlFoto != null && urlFoto.isNotEmpty
+                  child: urlFoto != null && urlFoto.toString().isNotEmpty
                       ? Image.network(
                           urlFoto,
                           width: 75,
                           height: 75,
                           fit: BoxFit.cover,
+                          // Manejador de error de imagen
+                          errorBuilder: (ctx, obj, trace) => Container(
+                            width: 75,
+                            height: 75,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.error),
+                          ),
                         )
                       : Container(
                           width: 75,
@@ -310,11 +343,8 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
                 ),
               ],
             ),
-
             const SizedBox(height: 10),
             const Divider(thickness: 1),
-
-            // Descripción y tipo/raza si aplica
             Text(
               esReporte
                   ? "Tipo: ${data["tipo"] ?? "-"}  •  Raza: ${data["raza"] ?? "-"}"
@@ -336,10 +366,7 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
-
             const SizedBox(height: 12),
-
-            // Botones de acción
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
