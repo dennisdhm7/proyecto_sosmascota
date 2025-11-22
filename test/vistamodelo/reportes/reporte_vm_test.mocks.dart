@@ -1360,7 +1360,7 @@ class MockUser extends _i1.Mock implements _i4.User {
 /// A class which mocks [CollectionReferenceMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-
+// ignore:
 class MockCollectionReferenceMap extends _i1.Mock
     implements _i12.CollectionReferenceMap {
   MockCollectionReferenceMap() {
@@ -1790,7 +1790,7 @@ class MockCollectionReferenceMap extends _i1.Mock
 /// A class which mocks [DocumentReferenceMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-
+// ignore:
 class MockDocumentReferenceMap extends _i1.Mock
     implements _i12.DocumentReferenceMap {
   MockDocumentReferenceMap() {

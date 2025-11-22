@@ -1274,7 +1274,7 @@ class MockWriteBatch extends _i1.Mock implements _i6.WriteBatch {
 /// A class which mocks [CollectionReferenceMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-
+// ignore:
 class MockCollectionReferenceMap extends _i1.Mock
     implements _i12.CollectionReferenceMap {
   MockCollectionReferenceMap() {
@@ -1701,7 +1701,7 @@ class MockCollectionReferenceMap extends _i1.Mock
 /// A class which mocks [QueryMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-
+// ignore:
 class MockQueryMap extends _i1.Mock implements _i12.QueryMap {
   MockQueryMap() {
     _i1.throwOnMissingStub(this);
