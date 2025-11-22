@@ -500,6 +500,11 @@ class Paso1Mascota extends StatelessWidget {
 
 typedef DatePickerFn = Future<DateTime?> Function();
 typedef TimePickerFn = Future<TimeOfDay?> Function();
+typedef MapaPickerFn = Future<Map<String, dynamic>?> Function();
+
+class WizardOverrides {
+  static MapaPickerFn? mapaOverride;
+}
 
 /// 🔹 Paso 2: Ubicación
 class Paso2Ubicacion extends StatelessWidget {
@@ -616,20 +621,26 @@ class Paso2Ubicacion extends StatelessWidget {
                       elevation: 2,
                     ),
                     onPressed: () async {
-                      final resultado = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const PantallaMapaOSM(),
-                        ),
-                      );
+                      final vm = context.read<ReporteMascotaVM>();
 
-                      if (resultado != null) {
+                      // 🌎 ¿Estamos en un test?
+                      final customFn = WizardOverrides.mapaOverride;
+
+                      final resultado = customFn != null
+                          ? await customFn() // ← simulación en test
+                          : await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PantallaMapaOSM(),
+                              ),
+                            );
+
+                      if (resultado != null && context.mounted) {
                         vm.reporte.direccion =
                             (resultado['direccion'] ?? '') as String;
                         vm.reporte.distrito =
                             (resultado['distrito'] ?? '') as String;
 
-                        // Si lat/lng vienen como double, los asignamos directamente
                         vm.reporte.latitud = resultado['lat'] is num
                             ? (resultado['lat'] as num).toDouble()
                             : null;
@@ -690,21 +701,35 @@ class Paso2Ubicacion extends StatelessWidget {
                         color: Color(0xFF4D9EF6),
                       ),
                       onPressed: () async {
-                        final resultado = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const PantallaMapaOSM(),
-                          ),
-                        );
+                        final vm = context.read<ReporteMascotaVM>();
+                        final safeContext = context;
+
+                        final mapaFn = WizardOverrides.mapaOverride;
+
+                        final resultado = mapaFn != null
+                            ? await mapaFn()
+                            : await Navigator.push(
+                                safeContext,
+                                MaterialPageRoute(
+                                  builder: (_) => const PantallaMapaOSM(),
+                                ),
+                              );
+
+                        if (!safeContext.mounted) return;
 
                         if (resultado != null) {
                           vm.reporte.direccion = resultado['direccion'] ?? '';
                           vm.reporte.distrito = resultado['distrito'] ?? '';
-                          vm.reporte.latitud = resultado['lat'];
-                          vm.reporte.longitud = resultado['lng'];
 
-                          direccionCtrl.text =
-                              vm.reporte.direccion; // 🧠 autocompleta
+                          vm.reporte.latitud = resultado['lat'] is num
+                              ? (resultado['lat'] as num).toDouble()
+                              : null;
+
+                          vm.reporte.longitud = resultado['lng'] is num
+                              ? (resultado['lng'] as num).toDouble()
+                              : null;
+
+                          direccionCtrl.text = vm.reporte.direccion;
                         }
                       },
                     ),

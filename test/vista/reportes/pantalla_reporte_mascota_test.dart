@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:sos_mascotas/vista/reportes/pantalla_reporte_mascota.dart';
+import 'package:sos_mascotas/vista/reportes/video_recorte_page.dart';
 import 'package:sos_mascotas/vistamodelo/reportes/reporte_vm.dart';
 
 import 'pantalla_reporte_mascota_test.mocks.dart';
@@ -283,6 +284,93 @@ void main() {
             // Verificar que el modelo se actualizó
             expect(viewModel.reporte.fechaPerdida, "20/11/2025");
           });
+    },
+  );
+
+  testWidgets(
+    '🟢 Paso 2 → Selección de mapa llena dirección, distrito y coordenadas',
+    (WidgetTester tester) async {
+      // 🔧 Override del mapa
+      WizardOverrides.mapaOverride = () async {
+        return {
+          "direccion": "Av. Bolognesi",
+          "distrito": "Tacna",
+          "lat": -18.013,
+          "lng": -70.253,
+        };
+      };
+
+      await cargarPantalla(tester);
+
+      // Avanza al Paso 2
+      viewModel.setPaso(1);
+      await tester.pumpAndSettle();
+
+      // Busca el botón de mapa
+      final btnMapa = find.text("Abrir mapa interactivo");
+      expect(btnMapa, findsOneWidget);
+
+      await tester.tap(btnMapa);
+      await tester.pumpAndSettle();
+
+      // Verificar que el modelo fue llenado
+      expect(viewModel.reporte.direccion, "Av. Bolognesi");
+      expect(viewModel.reporte.distrito, "Tacna");
+      expect(viewModel.reporte.latitud, -18.013);
+      expect(viewModel.reporte.longitud, -70.253);
+
+      // Verificar que se autocompleta el TextField
+      expect(find.text("Av. Bolognesi"), findsOneWidget);
+
+      // Quitar override
+      WizardOverrides.mapaOverride = null;
+    },
+  );
+
+  testWidgets(
+    '🟢 Paso 2 → Icono del mapa actualiza dirección/distrito/coords',
+    (WidgetTester tester) async {
+      // Override del mapa
+      WizardOverrides.mapaOverride = () async {
+        return {
+          "direccion": "Av. San Martín",
+          "distrito": "Alto Lima",
+          "lat": -18.001,
+          "lng": -70.220,
+        };
+      };
+
+      // Pasar al paso 2
+      viewModel.setPaso(1);
+
+      await cargarPantalla(tester);
+      await tester.pumpAndSettle();
+
+      // Buscar el ícono del mapa dentro del TextField
+      final tfDireccion = find.widgetWithText(
+        TextFormField,
+        "Dirección (puedes editar si lo deseas)",
+      );
+      final iconFinder = find.descendant(
+        of: tfDireccion,
+        matching: find.byType(IconButton),
+      );
+
+      // Tap
+      await tester.tap(iconFinder);
+      await tester.pumpAndSettle();
+
+      // Verificar en el modelo
+      expect(viewModel.reporte.direccion, "Av. San Martín");
+      expect(viewModel.reporte.distrito, "Alto Lima");
+      expect(viewModel.reporte.latitud, -18.001);
+      expect(viewModel.reporte.longitud, -70.220);
+
+      // Verifica que se autocompletó el campo
+      expect(find.text("Av. San Martín"), findsOneWidget);
+
+      // Limpiar override
+      WizardOverrides.mapaOverride = null;
     },
   );
 
