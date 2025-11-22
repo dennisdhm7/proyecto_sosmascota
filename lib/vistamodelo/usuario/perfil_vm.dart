@@ -11,23 +11,33 @@ class PerfilVM extends ChangeNotifier {
   final telefonoCtrl = TextEditingController();
   final ubicacionCtrl = TextEditingController();
 
+  final FirebaseAuth auth;
+  final FirebaseFirestore firestore;
+  final FirebaseStorage storage;
+  final ImagePicker imagePicker;
+
   String? fotoUrl;
   bool cargando = true;
 
   bool notificacionesPush = true;
   bool alertasEmail = false;
 
-  PerfilVM() {
+  PerfilVM({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    FirebaseStorage? storage,
+    ImagePicker? imagePicker,
+  }) : auth = auth ?? FirebaseAuth.instance,
+       firestore = firestore ?? FirebaseFirestore.instance,
+       storage = storage ?? FirebaseStorage.instance,
+       imagePicker = imagePicker ?? ImagePicker() {
     cargarPerfil();
   }
 
   Future<void> cargarPerfil() async {
     try {
-      final uid = FirebaseAuth.instance.currentUser!.uid;
-      final doc = await FirebaseFirestore.instance
-          .collection("usuarios")
-          .doc(uid)
-          .get();
+      final uid = auth.currentUser!.uid;
+      final doc = await firestore.collection("usuarios").doc(uid).get();
 
       if (doc.exists) {
         final d = doc.data()!;
@@ -44,8 +54,8 @@ class PerfilVM extends ChangeNotifier {
   }
 
   Future<void> guardar() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    await FirebaseFirestore.instance.collection("usuarios").doc(uid).update({
+    final uid = auth.currentUser!.uid;
+    await firestore.collection("usuarios").doc(uid).update({
       "telefono": telefonoCtrl.text.trim(),
       "ubicacion": ubicacionCtrl.text.trim(),
       "fotoPerfil": fotoUrl ?? "",
@@ -55,22 +65,17 @@ class PerfilVM extends ChangeNotifier {
   }
 
   Future<void> cambiarFoto() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
+    final picked = await imagePicker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    final ref = FirebaseStorage.instance.ref().child(
-      "usuarios/$uid/perfil.jpg",
-    );
+    final ref = storage.ref().child("usuarios/$uid/perfil.jpg");
 
     await ref.putFile(File(picked.path));
     final url = await ref.getDownloadURL();
 
     fotoUrl = url;
-    await FirebaseFirestore.instance.collection("usuarios").doc(uid).update({
-      "fotoPerfil": url,
-    });
+    await firestore.collection("usuarios").doc(uid).update({"fotoPerfil": url});
 
     notifyListeners();
   }
@@ -78,14 +83,14 @@ class PerfilVM extends ChangeNotifier {
   Future<void> enviarResetPassword() async {
     final correo = correoCtrl.text.trim();
     if (correo.isNotEmpty) {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: correo);
+      await auth.sendPasswordResetEmail(email: correo);
     }
   }
 
   Future<void> eliminarCuenta() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    await FirebaseFirestore.instance.collection("usuarios").doc(uid).delete();
-    await FirebaseAuth.instance.currentUser!.delete();
+    final uid = auth.currentUser!.uid;
+    await firestore.collection("usuarios").doc(uid).delete();
+    await auth.currentUser!.delete();
   }
 
   @override

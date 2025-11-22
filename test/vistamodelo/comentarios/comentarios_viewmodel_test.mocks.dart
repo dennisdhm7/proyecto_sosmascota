@@ -384,7 +384,7 @@ class MockFirebaseFirestore extends _i1.Mock implements _i4.FirebaseFirestore {
 /// A class which mocks [CollectionReferenceMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-// ignore: must_be_immutable
+
 class MockCollectionReferenceMap extends _i1.Mock
     implements _i8.CollectionReferenceMap {
   MockCollectionReferenceMap() {
@@ -811,7 +811,7 @@ class MockCollectionReferenceMap extends _i1.Mock
 /// A class which mocks [QueryMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-// ignore: must_be_immutable
+
 class MockQueryMap extends _i1.Mock implements _i8.QueryMap {
   MockQueryMap() {
     _i1.throwOnMissingStub(this);
