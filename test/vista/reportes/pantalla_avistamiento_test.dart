@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:sos_mascotas/modelo/avistamiento.dart';
@@ -8,6 +9,55 @@ import 'package:sos_mascotas/vistamodelo/reportes/avistamiento_vm.dart';
 
 @GenerateMocks([AvistamientoVM])
 import 'pantalla_avistamiento_test.mocks.dart';
+
+// ⭐ FakeImagePicker para tests
+class FakeImagePicker extends Fake implements ImagePicker {
+  XFile? fileToReturn;
+
+  @override
+  Future<XFile?> pickImage({
+    required ImageSource source,
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    CameraDevice preferredCameraDevice = CameraDevice.rear,
+    bool requestFullMetadata = true,
+  }) async {
+    return fileToReturn;
+  }
+}
+
+// ⭐ PantallaMapaOSM falsa → devuelve datos automáticamente
+class FakePantallaMapaOSM extends StatelessWidget {
+  const FakePantallaMapaOSM({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    Future.microtask(() {
+      Navigator.pop(context, {
+        "direccion": "Av. Patricio Melendez 123",
+        "distrito": "Tacna",
+        "lat": -18.006,
+        "lng": -70.246,
+      });
+    });
+
+    return const SizedBox.shrink();
+  }
+}
+
+// ⭐ Contenedor especial para interceptar Navigator.push
+Widget buildTestApp(Widget child) {
+  return MaterialApp(
+    home: child,
+    onGenerateRoute: (settings) {
+      if (settings.name == "/mapaFake") {
+        return MaterialPageRoute(builder: (_) => const FakePantallaMapaOSM());
+      }
+      return null;
+    },
+  );
+}
 
 void main() {
   late MockAvistamientoVM mockVM;
@@ -22,8 +72,10 @@ void main() {
     when(mockVM.limpiarMensaje()).thenReturn(null);
   });
 
-  Future<void> cargarPantalla(WidgetTester tester) async {
-    // Pantalla gigante (1080px de ancho lógico) para que todo quepa sin overflow
+  Future<void> cargarPantalla(
+    WidgetTester tester, {
+    ImagePicker? picker,
+  }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1.0;
 
@@ -31,12 +83,14 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MaterialApp(home: PantallaAvistamiento(viewModelTest: mockVM)),
+      MaterialApp(
+        home: PantallaAvistamiento(viewModelTest: mockVM, pickerTest: picker),
+      ),
     );
+
+    await tester.pumpAndSettle();
   }
 
-  // CORRECCIÓN FINAL: Agregamos .first
-  // Esto selecciona el Scrollable más externo (el de la página) y descarta los internos de los inputs.
   final mainScrollFinder = find
       .descendant(
         of: find.byType(SingleChildScrollView),
@@ -55,7 +109,6 @@ void main() {
 
       final btnGuardar = find.byKey(const Key('btnGuardar'));
 
-      // Usamos el finder corregido
       await tester.scrollUntilVisible(
         btnGuardar,
         500.0,
@@ -66,40 +119,29 @@ void main() {
       expect(btnGuardar, findsOneWidget);
     });
 
-    testWidgets(
-      'Debe mostrar errores de validación si se intenta guardar vacío',
-      (tester) async {
-        await cargarPantalla(tester);
+    testWidgets('Debe mostrar errores de validación al guardar vacío', (
+      tester,
+    ) async {
+      await cargarPantalla(tester);
 
-        final btnGuardar = find.byKey(const Key('btnGuardar'));
+      final btnGuardar = find.byKey(const Key('btnGuardar'));
 
-        // 1. Scroll hacia abajo
-        await tester.scrollUntilVisible(
-          btnGuardar,
-          500,
-          scrollable: mainScrollFinder,
-        );
-        await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        btnGuardar,
+        500,
+        scrollable: mainScrollFinder,
+      );
+      await tester.pumpAndSettle();
 
-        // 2. Tap en Guardar
-        await tester.tap(btnGuardar);
-        await tester.pumpAndSettle();
+      await tester.tap(btnGuardar);
+      await tester.pumpAndSettle();
 
-        verifyNever(mockVM.guardarAvistamiento());
+      verifyNever(mockVM.guardarAvistamiento());
 
-        // 3. Scroll hacia ARRIBA para ver el error superior
-        final errorUbicacion = find.text('Seleccione una ubicación');
-        await tester.scrollUntilVisible(
-          errorUbicacion,
-          -500, // Negativo sube
-          scrollable: mainScrollFinder,
-        );
-
-        expect(errorUbicacion, findsOneWidget);
-        expect(find.text('Seleccione fecha'), findsOneWidget);
-        expect(find.text('Ingrese una descripción'), findsOneWidget);
-      },
-    );
+      expect(find.text('Seleccione una ubicación'), findsOneWidget);
+      expect(find.text('Seleccione fecha'), findsOneWidget);
+      expect(find.text('Ingrese una descripción'), findsOneWidget);
+    });
 
     testWidgets('Debe llamar al VM cuando se escribe una descripción', (
       tester,
@@ -121,23 +163,98 @@ void main() {
       verify(mockVM.setDescripcion('Perro encontrado')).called(1);
     });
 
-    testWidgets('Debe intentar guardar si el formulario es válido (simulado)', (
+    testWidgets('Debe seleccionar imagen y llamar a subirFoto()', (
       tester,
     ) async {
-      await cargarPantalla(tester);
-      final btnGuardar = find.byKey(const Key('btnGuardar'));
+      when(
+        mockVM.subirFoto(any),
+      ).thenAnswer((_) async => "https://foto_subida.jpg");
+
+      final fakePicker = FakeImagePicker();
+      fakePicker.fileToReturn = XFile("fake.jpg");
+
+      await cargarPantalla(tester, picker: fakePicker);
+
+      final btnGaleria = find.byKey(const Key('btnGaleria'));
 
       await tester.scrollUntilVisible(
-        btnGuardar,
-        500,
+        btnGaleria,
+        300,
         scrollable: mainScrollFinder,
       );
+
+      await tester.tap(btnGaleria);
       await tester.pumpAndSettle();
 
-      await tester.tap(btnGuardar);
-      await tester.pump();
+      verify(mockVM.subirFoto(any)).called(1);
 
-      expect(find.text('Ingrese una descripción'), findsOneWidget);
+      final state =
+          tester.state(
+                find.byWidgetPredicate(
+                  (w) => w.runtimeType.toString() == "_FormularioAvistamiento",
+                ),
+              )
+              as dynamic;
+
+      expect(state.imagenesSeleccionadas.length, 1);
+      expect(mockVM.avistamiento.foto, "https://foto_subida.jpg");
+    });
+
+    // ⭐ TEST FINAL: Cubre Navigator + actualizarUbicacion + asignación al campo
+    testWidgets('Debe actualizar ubicación después de regresar del mapa', (
+      tester,
+    ) async {
+      when(
+        mockVM.actualizarUbicacion(
+          direccion: anyNamed("direccion"),
+          distrito: anyNamed("distrito"),
+          latitud: anyNamed("latitud"),
+          longitud: anyNamed("longitud"),
+        ),
+      ).thenReturn(null);
+
+      await tester.pumpWidget(
+        buildTestApp(
+          PantallaAvistamiento(
+            viewModelTest: mockVM,
+            mapaTest: const FakePantallaMapaOSM(), // ✔ SE INYECTA AQUÍ
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final btnMapa = find.byKey(const Key('btnMapa'));
+
+      await tester.scrollUntilVisible(
+        btnMapa,
+        500,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      await tester.pumpAndSettle();
+
+      // ✔ SOLO hacemos tap — NO navegamos manualmente
+      await tester.tap(btnMapa);
+      await tester.pumpAndSettle();
+
+      // ✔ Se verifica la llamada correcta
+      verify(
+        mockVM.actualizarUbicacion(
+          direccion: "Av. Patricio Melendez 123",
+          distrito: "Tacna",
+          latitud: -18.006,
+          longitud: -70.246,
+        ),
+      ).called(1);
+
+      // ✔ Se verifica que se actualizó el campo
+      final txtDireccion = find.byKey(const Key('fieldDireccion'));
+
+      expect(
+        (tester.widget(txtDireccion) as TextFormField).controller!.text,
+        equals("Av. Patricio Melendez 123"),
+      );
     });
   });
 }

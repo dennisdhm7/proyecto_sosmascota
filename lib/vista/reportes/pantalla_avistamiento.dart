@@ -6,22 +6,34 @@ import 'package:sos_mascotas/vista/reportes/pantalla_mapa_osm.dart';
 import 'package:sos_mascotas/vistamodelo/reportes/avistamiento_vm.dart';
 
 class PantallaAvistamiento extends StatelessWidget {
-  // Aceptamos el VM en el constructor para inyectar Mocks en los tests
   final AvistamientoVM? viewModelTest;
+  final ImagePicker? pickerTest;
+  final Widget? mapaTest;
 
-  const PantallaAvistamiento({super.key, this.viewModelTest});
+  const PantallaAvistamiento({
+    super.key,
+    this.viewModelTest,
+    this.pickerTest,
+    this.mapaTest,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => viewModelTest ?? AvistamientoVM(),
-      child: const _FormularioAvistamiento(),
+      child: _FormularioAvistamiento(
+        pickerTest: pickerTest, // 👈 PASAMOS EL PICKER INYECTADO
+        mapaTest: mapaTest,
+      ),
     );
   }
 }
 
 class _FormularioAvistamiento extends StatefulWidget {
-  const _FormularioAvistamiento();
+  final ImagePicker? pickerTest; // 👈 ACEPTAMOS EL PICKER
+  final Widget? mapaTest;
+
+  const _FormularioAvistamiento({this.pickerTest, this.mapaTest});
 
   @override
   State<_FormularioAvistamiento> createState() =>
@@ -30,7 +42,8 @@ class _FormularioAvistamiento extends StatefulWidget {
 
 class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
   final formKey = GlobalKey<FormState>();
-  final picker = ImagePicker();
+
+  late ImagePicker picker;
 
   late TextEditingController direccionCtrl;
   late TextEditingController fechaCtrl;
@@ -42,6 +55,7 @@ class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
   @override
   void initState() {
     super.initState();
+    picker = widget.pickerTest ?? ImagePicker();
     direccionCtrl = TextEditingController();
     fechaCtrl = TextEditingController();
     horaCtrl = TextEditingController();
@@ -89,7 +103,6 @@ class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
     final file = File(picked.path);
     setState(() => imagenesSeleccionadas.add(file));
 
-    // Llamamos al VM, la respuesta visual se maneja en el listener
     final url = await vm.subirFoto(file);
     if (url != null) {
       vm.avistamiento.foto = url;
@@ -202,7 +215,9 @@ class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
                                 final resultado = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const PantallaMapaOSM(),
+                                    builder: (_) =>
+                                        widget.mapaTest ??
+                                        const PantallaMapaOSM(),
                                   ),
                                 );
                                 if (resultado != null) {
