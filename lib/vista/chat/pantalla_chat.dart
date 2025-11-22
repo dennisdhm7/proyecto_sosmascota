@@ -10,6 +10,10 @@ class PantallaChat extends StatefulWidget {
   final String publicadorId;
   final String usuarioId;
 
+  // 💉 INYECCIÓN DE DEPENDENCIAS (Opcionales para testing)
+  final FirebaseAuth? firebaseAuth;
+  final FirebaseFirestore? firebaseFirestore;
+
   const PantallaChat({
     super.key,
     required this.chatId,
@@ -17,6 +21,8 @@ class PantallaChat extends StatefulWidget {
     required this.tipo,
     required this.publicadorId,
     required this.usuarioId,
+    this.firebaseAuth,
+    this.firebaseFirestore,
   });
 
   @override
@@ -25,8 +31,11 @@ class PantallaChat extends StatefulWidget {
 
 class _PantallaChatState extends State<PantallaChat> {
   final TextEditingController _mensajeCtrl = TextEditingController();
-  final _auth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
+
+  // 💉 Usamos las instancias inyectadas o las reales por defecto
+  late final FirebaseAuth _auth;
+  late final FirebaseFirestore _firestore;
 
   Map<String, dynamic>? _reporteData;
   bool _cargando = true;
@@ -34,6 +43,8 @@ class _PantallaChatState extends State<PantallaChat> {
   @override
   void initState() {
     super.initState();
+    _auth = widget.firebaseAuth ?? FirebaseAuth.instance;
+    _firestore = widget.firebaseFirestore ?? FirebaseFirestore.instance;
     _cargarInfoReporte();
   }
 
@@ -43,21 +54,20 @@ class _PantallaChatState extends State<PantallaChat> {
           ? "reportes_mascotas"
           : "avistamientos";
 
-      final doc = await FirebaseFirestore.instance
-          .collection(col)
-          .doc(widget.reporteId)
-          .get();
+      final doc = await _firestore.collection(col).doc(widget.reporteId).get();
 
       if (doc.exists) {
-        setState(() {
-          _reporteData = doc.data();
-          _cargando = false;
-        });
+        if (mounted) {
+          setState(() {
+            _reporteData = doc.data();
+            _cargando = false;
+          });
+        }
       } else {
-        setState(() => _cargando = false);
+        if (mounted) setState(() => _cargando = false);
       }
     } catch (e) {
-      setState(() => _cargando = false);
+      if (mounted) setState(() => _cargando = false);
     }
   }
 
@@ -65,7 +75,7 @@ class _PantallaChatState extends State<PantallaChat> {
     final texto = _mensajeCtrl.text.trim();
     if (texto.isEmpty) return;
 
-    await FirebaseFirestore.instance
+    await _firestore
         .collection("chats")
         .doc(widget.chatId)
         .collection("mensajes")
@@ -78,7 +88,6 @@ class _PantallaChatState extends State<PantallaChat> {
 
     _mensajeCtrl.clear();
 
-    // 🔽 Baja automáticamente al último mensaje
     Future.delayed(const Duration(milliseconds: 200), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -92,7 +101,8 @@ class _PantallaChatState extends State<PantallaChat> {
 
   @override
   Widget build(BuildContext context) {
-    final uidActual = _auth.currentUser!.uid;
+    // Evitamos null check operator error si no hay usuario (en tests o logout)
+    final uidActual = _auth.currentUser?.uid ?? '';
 
     final titulo = _cargando
         ? "Cargando..."
@@ -147,10 +157,9 @@ class _PantallaChatState extends State<PantallaChat> {
       body: SafeArea(
         child: Column(
           children: [
-            // 💬 Lista de mensajes
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
+                stream: _firestore
                     .collection("chats")
                     .doc(widget.chatId)
                     .collection("mensajes")
@@ -245,8 +254,6 @@ class _PantallaChatState extends State<PantallaChat> {
                 },
               ),
             ),
-
-            // 🧾 Campo de texto + botón enviar (seguro contra notch)
             SafeArea(
               top: false,
               minimum: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
@@ -288,7 +295,7 @@ class _PantallaChatState extends State<PantallaChat> {
                       onTap: _enviarMensaje,
                       child: Container(
                         padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.teal,
                           shape: BoxShape.circle,
                         ),
