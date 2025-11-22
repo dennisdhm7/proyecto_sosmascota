@@ -63,9 +63,37 @@ void main() {
     },
   );
 
+  test('guardar guarda cadena vacia cuando fotoUrl es null', () async {
+    final vm = PerfilVM(auth: auth, firestore: firestore, storage: storage);
+    await vm.cargarPerfil();
+
+    vm.telefonoCtrl.text = '000-0000';
+    vm.ubicacionCtrl.text = 'Cusco';
+    vm.fotoUrl = null;
+
+    await vm.guardar();
+
+    final doc = await firestore.collection('usuarios').doc('uid123').get();
+    final data = doc.data()!;
+    expect(data['telefono'], '000-0000');
+    expect(data['ubicacion'], 'Cusco');
+    expect(
+      data['fotoPerfil'],
+      '',
+    ); // debe guardar cadena vacía si fotoUrl es null
+  });
+
   test('enviarResetPassword no lanza cuando hay correo', () async {
     final vm = PerfilVM(auth: auth, firestore: firestore, storage: storage);
     vm.correoCtrl.text = 'test@correo.com';
+
+    // debe completar sin excepciones
+    await vm.enviarResetPassword();
+  });
+
+  test('enviarResetPassword no lanza cuando correo vacio', () async {
+    final vm = PerfilVM(auth: auth, firestore: firestore, storage: storage);
+    vm.correoCtrl.text = '';
 
     // debe completar sin excepciones
     await vm.enviarResetPassword();

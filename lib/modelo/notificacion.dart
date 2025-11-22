@@ -28,7 +28,7 @@ class Notificacion {
       tipo: data['tipo'] ?? '',
       leido: data['leido'] ?? false,
       fecha: (data['fecha'] is Timestamp)
-          ? (data['fecha'] as Timestamp).toDate()
+          ? (data['fecha'] as Timestamp).toDate().toUtc()
           : null,
     );
   }

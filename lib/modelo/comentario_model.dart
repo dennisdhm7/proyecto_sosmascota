@@ -31,7 +31,9 @@ class Comentario {
       texto: data['texto'] ?? '',
       autor: data['autor'] ?? 'Anónimo',
       uid: data['uid'] ?? '',
-      fecha: (data['fecha'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      fecha:
+          (data['fecha'] as Timestamp?)?.toDate().toUtc() ??
+          DateTime.now().toUtc(),
       mediaUrl: data['mediaUrl'],
       mediaType: data['mediaType'],
       likes: List<String>.from(data['likes'] ?? []),
