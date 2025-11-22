@@ -4,7 +4,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i7;
-import 'dart:io' as _i9;
+import 'dart:io' as _i8;
 import 'dart:typed_data' as _i11;
 
 import 'package:cloud_firestore/cloud_firestore.dart' as _i6;
@@ -14,7 +14,7 @@ import 'package:firebase_auth/firebase_auth.dart' as _i4;
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart'
     as _i3;
 import 'package:firebase_core/firebase_core.dart' as _i2;
-import 'package:firebase_storage/firebase_storage.dart' as _i8;
+import 'package:firebase_storage/firebase_storage.dart' as _i9;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i10;
 import 'package:sos_mascotas/vistamodelo/reportes/reporte_vm.dart' as _i13;
@@ -110,56 +110,87 @@ class _FakeFuture_12<T1> extends _i1.SmartFake implements _i7.Future<T1> {
     : super(parent, parentInvocation);
 }
 
-class _FakeDuration_13 extends _i1.SmartFake implements Duration {
-  _FakeDuration_13(Object parent, Invocation parentInvocation)
+class _FakeUserMetadata_13 extends _i1.SmartFake implements _i3.UserMetadata {
+  _FakeUserMetadata_13(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeReference_14 extends _i1.SmartFake implements _i8.Reference {
-  _FakeReference_14(Object parent, Invocation parentInvocation)
+class _FakeMultiFactor_14 extends _i1.SmartFake implements _i4.MultiFactor {
+  _FakeMultiFactor_14(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeUserMetadata_15 extends _i1.SmartFake implements _i3.UserMetadata {
-  _FakeUserMetadata_15(Object parent, Invocation parentInvocation)
+class _FakeIdTokenResult_15 extends _i1.SmartFake implements _i3.IdTokenResult {
+  _FakeIdTokenResult_15(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeMultiFactor_16 extends _i1.SmartFake implements _i4.MultiFactor {
-  _FakeMultiFactor_16(Object parent, Invocation parentInvocation)
+class _FakeUser_16 extends _i1.SmartFake implements _i4.User {
+  _FakeUser_16(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeIdTokenResult_17 extends _i1.SmartFake implements _i3.IdTokenResult {
-  _FakeIdTokenResult_17(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
-}
-
-class _FakeUser_18 extends _i1.SmartFake implements _i4.User {
-  _FakeUser_18(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
-}
-
-class _FakeFirebaseFirestore_19 extends _i1.SmartFake
+class _FakeFirebaseFirestore_17 extends _i1.SmartFake
     implements _i6.FirebaseFirestore {
-  _FakeFirebaseFirestore_19(Object parent, Invocation parentInvocation)
+  _FakeFirebaseFirestore_17(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeAggregateQuery_20 extends _i1.SmartFake
+class _FakeAggregateQuery_18 extends _i1.SmartFake
     implements _i6.AggregateQuery {
-  _FakeAggregateQuery_20(Object parent, Invocation parentInvocation)
+  _FakeAggregateQuery_18(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeDocumentSnapshot_21<T extends Object?> extends _i1.SmartFake
+class _FakeDocumentSnapshot_19<T extends Object?> extends _i1.SmartFake
     implements _i6.DocumentSnapshot<T> {
-  _FakeDocumentSnapshot_21(Object parent, Invocation parentInvocation)
+  _FakeDocumentSnapshot_19(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeFile_22 extends _i1.SmartFake implements _i9.File {
-  _FakeFile_22(Object parent, Invocation parentInvocation)
+class _FakeFile_20 extends _i1.SmartFake implements _i8.File {
+  _FakeFile_20(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeFirebaseStorage_21 extends _i1.SmartFake
+    implements _i9.FirebaseStorage {
+  _FakeFirebaseStorage_21(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeReference_22 extends _i1.SmartFake implements _i9.Reference {
+  _FakeReference_22(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeFullMetadata_23 extends _i1.SmartFake implements _i9.FullMetadata {
+  _FakeFullMetadata_23(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeListResult_24 extends _i1.SmartFake implements _i9.ListResult {
+  _FakeListResult_24(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeUploadTask_25 extends _i1.SmartFake implements _i9.UploadTask {
+  _FakeUploadTask_25(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeDownloadTask_26 extends _i1.SmartFake implements _i9.DownloadTask {
+  _FakeDownloadTask_26(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeTaskSnapshot_27 extends _i1.SmartFake implements _i9.TaskSnapshot {
+  _FakeTaskSnapshot_27(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeDuration_28 extends _i1.SmartFake implements Duration {
+  _FakeDuration_28(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -912,144 +943,6 @@ class MockFirebaseFirestore extends _i1.Mock implements _i6.FirebaseFirestore {
           as _i7.Future<void>);
 }
 
-/// A class which mocks [FirebaseStorage].
-///
-/// See the documentation for Mockito's code generation for more information.
-class MockFirebaseStorage extends _i1.Mock implements _i8.FirebaseStorage {
-  MockFirebaseStorage() {
-    _i1.throwOnMissingStub(this);
-  }
-
-  @override
-  _i2.FirebaseApp get app =>
-      (super.noSuchMethod(
-            Invocation.getter(#app),
-            returnValue: _FakeFirebaseApp_0(this, Invocation.getter(#app)),
-          )
-          as _i2.FirebaseApp);
-
-  @override
-  String get bucket =>
-      (super.noSuchMethod(
-            Invocation.getter(#bucket),
-            returnValue: _i10.dummyValue<String>(
-              this,
-              Invocation.getter(#bucket),
-            ),
-          )
-          as String);
-
-  @override
-  Duration get maxOperationRetryTime =>
-      (super.noSuchMethod(
-            Invocation.getter(#maxOperationRetryTime),
-            returnValue: _FakeDuration_13(
-              this,
-              Invocation.getter(#maxOperationRetryTime),
-            ),
-          )
-          as Duration);
-
-  @override
-  Duration get maxUploadRetryTime =>
-      (super.noSuchMethod(
-            Invocation.getter(#maxUploadRetryTime),
-            returnValue: _FakeDuration_13(
-              this,
-              Invocation.getter(#maxUploadRetryTime),
-            ),
-          )
-          as Duration);
-
-  @override
-  Duration get maxDownloadRetryTime =>
-      (super.noSuchMethod(
-            Invocation.getter(#maxDownloadRetryTime),
-            returnValue: _FakeDuration_13(
-              this,
-              Invocation.getter(#maxDownloadRetryTime),
-            ),
-          )
-          as Duration);
-
-  @override
-  set app(_i2.FirebaseApp? value) => super.noSuchMethod(
-    Invocation.setter(#app, value),
-    returnValueForMissingStub: null,
-  );
-
-  @override
-  set bucket(String? value) => super.noSuchMethod(
-    Invocation.setter(#bucket, value),
-    returnValueForMissingStub: null,
-  );
-
-  @override
-  Map<dynamic, dynamic> get pluginConstants =>
-      (super.noSuchMethod(
-            Invocation.getter(#pluginConstants),
-            returnValue: <dynamic, dynamic>{},
-          )
-          as Map<dynamic, dynamic>);
-
-  @override
-  _i8.Reference ref([String? path]) =>
-      (super.noSuchMethod(
-            Invocation.method(#ref, [path]),
-            returnValue: _FakeReference_14(
-              this,
-              Invocation.method(#ref, [path]),
-            ),
-          )
-          as _i8.Reference);
-
-  @override
-  _i8.Reference refFromURL(String? url) =>
-      (super.noSuchMethod(
-            Invocation.method(#refFromURL, [url]),
-            returnValue: _FakeReference_14(
-              this,
-              Invocation.method(#refFromURL, [url]),
-            ),
-          )
-          as _i8.Reference);
-
-  @override
-  void setMaxOperationRetryTime(Duration? time) => super.noSuchMethod(
-    Invocation.method(#setMaxOperationRetryTime, [time]),
-    returnValueForMissingStub: null,
-  );
-
-  @override
-  void setMaxUploadRetryTime(Duration? time) => super.noSuchMethod(
-    Invocation.method(#setMaxUploadRetryTime, [time]),
-    returnValueForMissingStub: null,
-  );
-
-  @override
-  void setMaxDownloadRetryTime(Duration? time) => super.noSuchMethod(
-    Invocation.method(#setMaxDownloadRetryTime, [time]),
-    returnValueForMissingStub: null,
-  );
-
-  @override
-  _i7.Future<void> useStorageEmulator(
-    String? host,
-    int? port, {
-    bool? automaticHostMapping = true,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(
-              #useStorageEmulator,
-              [host, port],
-              {#automaticHostMapping: automaticHostMapping},
-            ),
-            returnValue: _i7.Future<void>.value(),
-            returnValueForMissingStub: _i7.Future<void>.value(),
-          )
-          as _i7.Future<void>);
-}
-
 /// A class which mocks [User].
 ///
 /// See the documentation for Mockito's code generation for more information.
@@ -1072,7 +965,7 @@ class MockUser extends _i1.Mock implements _i4.User {
   _i3.UserMetadata get metadata =>
       (super.noSuchMethod(
             Invocation.getter(#metadata),
-            returnValue: _FakeUserMetadata_15(
+            returnValue: _FakeUserMetadata_13(
               this,
               Invocation.getter(#metadata),
             ),
@@ -1099,7 +992,7 @@ class MockUser extends _i1.Mock implements _i4.User {
   _i4.MultiFactor get multiFactor =>
       (super.noSuchMethod(
             Invocation.getter(#multiFactor),
-            returnValue: _FakeMultiFactor_16(
+            returnValue: _FakeMultiFactor_14(
               this,
               Invocation.getter(#multiFactor),
             ),
@@ -1130,7 +1023,7 @@ class MockUser extends _i1.Mock implements _i4.User {
       (super.noSuchMethod(
             Invocation.method(#getIdTokenResult, [forceRefresh]),
             returnValue: _i7.Future<_i3.IdTokenResult>.value(
-              _FakeIdTokenResult_17(
+              _FakeIdTokenResult_15(
                 this,
                 Invocation.method(#getIdTokenResult, [forceRefresh]),
               ),
@@ -1286,7 +1179,7 @@ class MockUser extends _i1.Mock implements _i4.User {
       (super.noSuchMethod(
             Invocation.method(#unlink, [providerId]),
             returnValue: _i7.Future<_i4.User>.value(
-              _FakeUser_18(this, Invocation.method(#unlink, [providerId])),
+              _FakeUser_16(this, Invocation.method(#unlink, [providerId])),
             ),
           )
           as _i7.Future<_i4.User>);
@@ -1390,7 +1283,7 @@ class MockCollectionReferenceMap extends _i1.Mock
   _i6.FirebaseFirestore get firestore =>
       (super.noSuchMethod(
             Invocation.getter(#firestore),
-            returnValue: _FakeFirebaseFirestore_19(
+            returnValue: _FakeFirebaseFirestore_17(
               this,
               Invocation.getter(#firestore),
             ),
@@ -1675,7 +1568,7 @@ class MockCollectionReferenceMap extends _i1.Mock
   _i6.AggregateQuery count() =>
       (super.noSuchMethod(
             Invocation.method(#count, []),
-            returnValue: _FakeAggregateQuery_20(
+            returnValue: _FakeAggregateQuery_18(
               this,
               Invocation.method(#count, []),
             ),
@@ -1748,7 +1641,7 @@ class MockCollectionReferenceMap extends _i1.Mock
               aggregateField29,
               aggregateField30,
             ]),
-            returnValue: _FakeAggregateQuery_20(
+            returnValue: _FakeAggregateQuery_18(
               this,
               Invocation.method(#aggregate, [
                 aggregateField1,
@@ -1801,7 +1694,7 @@ class MockDocumentReferenceMap extends _i1.Mock
   _i6.FirebaseFirestore get firestore =>
       (super.noSuchMethod(
             Invocation.getter(#firestore),
-            returnValue: _FakeFirebaseFirestore_19(
+            returnValue: _FakeFirebaseFirestore_17(
               this,
               Invocation.getter(#firestore),
             ),
@@ -1877,7 +1770,7 @@ class MockDocumentReferenceMap extends _i1.Mock
             Invocation.method(#get, [options]),
             returnValue:
                 _i7.Future<_i6.DocumentSnapshot<Map<String, dynamic>>>.value(
-                  _FakeDocumentSnapshot_21<Map<String, dynamic>>(
+                  _FakeDocumentSnapshot_19<Map<String, dynamic>>(
                     this,
                     Invocation.method(#get, [options]),
                   ),
@@ -1940,7 +1833,7 @@ class MockReporteServiciosExternos extends _i1.Mock
   }
 
   @override
-  _i7.Future<Map<String, dynamic>> detectarAnimal(_i9.File? archivo) =>
+  _i7.Future<Map<String, dynamic>> detectarAnimal(_i8.File? archivo) =>
       (super.noSuchMethod(
             Invocation.method(#detectarAnimal, [archivo]),
             returnValue: _i7.Future<Map<String, dynamic>>.value(
@@ -1965,15 +1858,558 @@ class MockReporteServiciosExternos extends _i1.Mock
           as _i7.Future<void>);
 
   @override
-  _i7.Future<_i9.File> comprimirImagen(_i9.File? archivo) =>
+  _i7.Future<_i8.File> comprimirImagen(_i8.File? archivo) =>
       (super.noSuchMethod(
             Invocation.method(#comprimirImagen, [archivo]),
-            returnValue: _i7.Future<_i9.File>.value(
-              _FakeFile_22(
+            returnValue: _i7.Future<_i8.File>.value(
+              _FakeFile_20(
                 this,
                 Invocation.method(#comprimirImagen, [archivo]),
               ),
             ),
           )
-          as _i7.Future<_i9.File>);
+          as _i7.Future<_i8.File>);
+}
+
+/// A class which mocks [Reference].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockReference extends _i1.Mock implements _i9.Reference {
+  MockReference() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i9.FirebaseStorage get storage =>
+      (super.noSuchMethod(
+            Invocation.getter(#storage),
+            returnValue: _FakeFirebaseStorage_21(
+              this,
+              Invocation.getter(#storage),
+            ),
+          )
+          as _i9.FirebaseStorage);
+
+  @override
+  String get bucket =>
+      (super.noSuchMethod(
+            Invocation.getter(#bucket),
+            returnValue: _i10.dummyValue<String>(
+              this,
+              Invocation.getter(#bucket),
+            ),
+          )
+          as String);
+
+  @override
+  String get fullPath =>
+      (super.noSuchMethod(
+            Invocation.getter(#fullPath),
+            returnValue: _i10.dummyValue<String>(
+              this,
+              Invocation.getter(#fullPath),
+            ),
+          )
+          as String);
+
+  @override
+  String get name =>
+      (super.noSuchMethod(
+            Invocation.getter(#name),
+            returnValue: _i10.dummyValue<String>(
+              this,
+              Invocation.getter(#name),
+            ),
+          )
+          as String);
+
+  @override
+  _i9.Reference get root =>
+      (super.noSuchMethod(
+            Invocation.getter(#root),
+            returnValue: _FakeReference_22(this, Invocation.getter(#root)),
+          )
+          as _i9.Reference);
+
+  @override
+  _i9.Reference child(String? path) =>
+      (super.noSuchMethod(
+            Invocation.method(#child, [path]),
+            returnValue: _FakeReference_22(
+              this,
+              Invocation.method(#child, [path]),
+            ),
+          )
+          as _i9.Reference);
+
+  @override
+  _i7.Future<void> delete() =>
+      (super.noSuchMethod(
+            Invocation.method(#delete, []),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
+  _i7.Future<String> getDownloadURL() =>
+      (super.noSuchMethod(
+            Invocation.method(#getDownloadURL, []),
+            returnValue: _i7.Future<String>.value(
+              _i10.dummyValue<String>(
+                this,
+                Invocation.method(#getDownloadURL, []),
+              ),
+            ),
+          )
+          as _i7.Future<String>);
+
+  @override
+  _i7.Future<_i9.FullMetadata> getMetadata() =>
+      (super.noSuchMethod(
+            Invocation.method(#getMetadata, []),
+            returnValue: _i7.Future<_i9.FullMetadata>.value(
+              _FakeFullMetadata_23(this, Invocation.method(#getMetadata, [])),
+            ),
+          )
+          as _i7.Future<_i9.FullMetadata>);
+
+  @override
+  _i7.Future<_i9.ListResult> list([_i9.ListOptions? options]) =>
+      (super.noSuchMethod(
+            Invocation.method(#list, [options]),
+            returnValue: _i7.Future<_i9.ListResult>.value(
+              _FakeListResult_24(this, Invocation.method(#list, [options])),
+            ),
+          )
+          as _i7.Future<_i9.ListResult>);
+
+  @override
+  _i7.Future<_i9.ListResult> listAll() =>
+      (super.noSuchMethod(
+            Invocation.method(#listAll, []),
+            returnValue: _i7.Future<_i9.ListResult>.value(
+              _FakeListResult_24(this, Invocation.method(#listAll, [])),
+            ),
+          )
+          as _i7.Future<_i9.ListResult>);
+
+  @override
+  _i7.Future<_i11.Uint8List?> getData([int? maxSize = 10485760]) =>
+      (super.noSuchMethod(
+            Invocation.method(#getData, [maxSize]),
+            returnValue: _i7.Future<_i11.Uint8List?>.value(),
+          )
+          as _i7.Future<_i11.Uint8List?>);
+
+  @override
+  _i9.UploadTask putData(
+    _i11.Uint8List? data, [
+    _i9.SettableMetadata? metadata,
+  ]) =>
+      (super.noSuchMethod(
+            Invocation.method(#putData, [data, metadata]),
+            returnValue: _FakeUploadTask_25(
+              this,
+              Invocation.method(#putData, [data, metadata]),
+            ),
+          )
+          as _i9.UploadTask);
+
+  @override
+  _i9.UploadTask putBlob(dynamic blob, [_i9.SettableMetadata? metadata]) =>
+      (super.noSuchMethod(
+            Invocation.method(#putBlob, [blob, metadata]),
+            returnValue: _FakeUploadTask_25(
+              this,
+              Invocation.method(#putBlob, [blob, metadata]),
+            ),
+          )
+          as _i9.UploadTask);
+
+  @override
+  _i9.UploadTask putFile(_i8.File? file, [_i9.SettableMetadata? metadata]) =>
+      (super.noSuchMethod(
+            Invocation.method(#putFile, [file, metadata]),
+            returnValue: _FakeUploadTask_25(
+              this,
+              Invocation.method(#putFile, [file, metadata]),
+            ),
+          )
+          as _i9.UploadTask);
+
+  @override
+  _i9.UploadTask putString(
+    String? data, {
+    _i9.PutStringFormat? format = _i9.PutStringFormat.raw,
+    _i9.SettableMetadata? metadata,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #putString,
+              [data],
+              {#format: format, #metadata: metadata},
+            ),
+            returnValue: _FakeUploadTask_25(
+              this,
+              Invocation.method(
+                #putString,
+                [data],
+                {#format: format, #metadata: metadata},
+              ),
+            ),
+          )
+          as _i9.UploadTask);
+
+  @override
+  _i7.Future<_i9.FullMetadata> updateMetadata(_i9.SettableMetadata? metadata) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateMetadata, [metadata]),
+            returnValue: _i7.Future<_i9.FullMetadata>.value(
+              _FakeFullMetadata_23(
+                this,
+                Invocation.method(#updateMetadata, [metadata]),
+              ),
+            ),
+          )
+          as _i7.Future<_i9.FullMetadata>);
+
+  @override
+  _i9.DownloadTask writeToFile(_i8.File? file) =>
+      (super.noSuchMethod(
+            Invocation.method(#writeToFile, [file]),
+            returnValue: _FakeDownloadTask_26(
+              this,
+              Invocation.method(#writeToFile, [file]),
+            ),
+          )
+          as _i9.DownloadTask);
+}
+
+/// A class which mocks [UploadTask].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockUploadTask extends _i1.Mock implements _i9.UploadTask {
+  MockUploadTask() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i9.FirebaseStorage get storage =>
+      (super.noSuchMethod(
+            Invocation.getter(#storage),
+            returnValue: _FakeFirebaseStorage_21(
+              this,
+              Invocation.getter(#storage),
+            ),
+          )
+          as _i9.FirebaseStorage);
+
+  @override
+  _i7.Stream<_i9.TaskSnapshot> get snapshotEvents =>
+      (super.noSuchMethod(
+            Invocation.getter(#snapshotEvents),
+            returnValue: _i7.Stream<_i9.TaskSnapshot>.empty(),
+          )
+          as _i7.Stream<_i9.TaskSnapshot>);
+
+  @override
+  _i9.TaskSnapshot get snapshot =>
+      (super.noSuchMethod(
+            Invocation.getter(#snapshot),
+            returnValue: _FakeTaskSnapshot_27(
+              this,
+              Invocation.getter(#snapshot),
+            ),
+          )
+          as _i9.TaskSnapshot);
+
+  @override
+  _i7.Future<bool> pause() =>
+      (super.noSuchMethod(
+            Invocation.method(#pause, []),
+            returnValue: _i7.Future<bool>.value(false),
+          )
+          as _i7.Future<bool>);
+
+  @override
+  _i7.Future<bool> resume() =>
+      (super.noSuchMethod(
+            Invocation.method(#resume, []),
+            returnValue: _i7.Future<bool>.value(false),
+          )
+          as _i7.Future<bool>);
+
+  @override
+  _i7.Future<bool> cancel() =>
+      (super.noSuchMethod(
+            Invocation.method(#cancel, []),
+            returnValue: _i7.Future<bool>.value(false),
+          )
+          as _i7.Future<bool>);
+
+  @override
+  _i7.Stream<_i9.TaskSnapshot> asStream() =>
+      (super.noSuchMethod(
+            Invocation.method(#asStream, []),
+            returnValue: _i7.Stream<_i9.TaskSnapshot>.empty(),
+          )
+          as _i7.Stream<_i9.TaskSnapshot>);
+
+  @override
+  _i7.Future<_i9.TaskSnapshot> catchError(
+    Function? onError, {
+    bool Function(Object)? test,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#catchError, [onError], {#test: test}),
+            returnValue: _i7.Future<_i9.TaskSnapshot>.value(
+              _FakeTaskSnapshot_27(
+                this,
+                Invocation.method(#catchError, [onError], {#test: test}),
+              ),
+            ),
+          )
+          as _i7.Future<_i9.TaskSnapshot>);
+
+  @override
+  _i7.Future<S> then<S>(
+    _i7.FutureOr<S> Function(_i9.TaskSnapshot)? onValue, {
+    Function? onError,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#then, [onValue], {#onError: onError}),
+            returnValue:
+                _i10.ifNotNull(
+                  _i10.dummyValueOrNull<S>(
+                    this,
+                    Invocation.method(#then, [onValue], {#onError: onError}),
+                  ),
+                  (S v) => _i7.Future<S>.value(v),
+                ) ??
+                _FakeFuture_12<S>(
+                  this,
+                  Invocation.method(#then, [onValue], {#onError: onError}),
+                ),
+          )
+          as _i7.Future<S>);
+
+  @override
+  _i7.Future<_i9.TaskSnapshot> whenComplete(
+    _i7.FutureOr<dynamic> Function()? action,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#whenComplete, [action]),
+            returnValue: _i7.Future<_i9.TaskSnapshot>.value(
+              _FakeTaskSnapshot_27(
+                this,
+                Invocation.method(#whenComplete, [action]),
+              ),
+            ),
+          )
+          as _i7.Future<_i9.TaskSnapshot>);
+
+  @override
+  _i7.Future<_i9.TaskSnapshot> timeout(
+    Duration? timeLimit, {
+    _i7.FutureOr<_i9.TaskSnapshot> Function()? onTimeout,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#timeout, [timeLimit], {#onTimeout: onTimeout}),
+            returnValue: _i7.Future<_i9.TaskSnapshot>.value(
+              _FakeTaskSnapshot_27(
+                this,
+                Invocation.method(
+                  #timeout,
+                  [timeLimit],
+                  {#onTimeout: onTimeout},
+                ),
+              ),
+            ),
+          )
+          as _i7.Future<_i9.TaskSnapshot>);
+}
+
+/// A class which mocks [TaskSnapshot].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockTaskSnapshot extends _i1.Mock implements _i9.TaskSnapshot {
+  MockTaskSnapshot() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i9.FirebaseStorage get storage =>
+      (super.noSuchMethod(
+            Invocation.getter(#storage),
+            returnValue: _FakeFirebaseStorage_21(
+              this,
+              Invocation.getter(#storage),
+            ),
+          )
+          as _i9.FirebaseStorage);
+
+  @override
+  int get bytesTransferred =>
+      (super.noSuchMethod(Invocation.getter(#bytesTransferred), returnValue: 0)
+          as int);
+
+  @override
+  _i9.Reference get ref =>
+      (super.noSuchMethod(
+            Invocation.getter(#ref),
+            returnValue: _FakeReference_22(this, Invocation.getter(#ref)),
+          )
+          as _i9.Reference);
+
+  @override
+  _i9.TaskState get state =>
+      (super.noSuchMethod(
+            Invocation.getter(#state),
+            returnValue: _i9.TaskState.paused,
+          )
+          as _i9.TaskState);
+
+  @override
+  int get totalBytes =>
+      (super.noSuchMethod(Invocation.getter(#totalBytes), returnValue: 0)
+          as int);
+}
+
+/// A class which mocks [FirebaseStorage].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockFirebaseStorage2 extends _i1.Mock implements _i9.FirebaseStorage {
+  MockFirebaseStorage2() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i2.FirebaseApp get app =>
+      (super.noSuchMethod(
+            Invocation.getter(#app),
+            returnValue: _FakeFirebaseApp_0(this, Invocation.getter(#app)),
+          )
+          as _i2.FirebaseApp);
+
+  @override
+  String get bucket =>
+      (super.noSuchMethod(
+            Invocation.getter(#bucket),
+            returnValue: _i10.dummyValue<String>(
+              this,
+              Invocation.getter(#bucket),
+            ),
+          )
+          as String);
+
+  @override
+  Duration get maxOperationRetryTime =>
+      (super.noSuchMethod(
+            Invocation.getter(#maxOperationRetryTime),
+            returnValue: _FakeDuration_28(
+              this,
+              Invocation.getter(#maxOperationRetryTime),
+            ),
+          )
+          as Duration);
+
+  @override
+  Duration get maxUploadRetryTime =>
+      (super.noSuchMethod(
+            Invocation.getter(#maxUploadRetryTime),
+            returnValue: _FakeDuration_28(
+              this,
+              Invocation.getter(#maxUploadRetryTime),
+            ),
+          )
+          as Duration);
+
+  @override
+  Duration get maxDownloadRetryTime =>
+      (super.noSuchMethod(
+            Invocation.getter(#maxDownloadRetryTime),
+            returnValue: _FakeDuration_28(
+              this,
+              Invocation.getter(#maxDownloadRetryTime),
+            ),
+          )
+          as Duration);
+
+  @override
+  set app(_i2.FirebaseApp? value) => super.noSuchMethod(
+    Invocation.setter(#app, value),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set bucket(String? value) => super.noSuchMethod(
+    Invocation.setter(#bucket, value),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  Map<dynamic, dynamic> get pluginConstants =>
+      (super.noSuchMethod(
+            Invocation.getter(#pluginConstants),
+            returnValue: <dynamic, dynamic>{},
+          )
+          as Map<dynamic, dynamic>);
+
+  @override
+  _i9.Reference ref([String? path]) =>
+      (super.noSuchMethod(
+            Invocation.method(#ref, [path]),
+            returnValue: _FakeReference_22(
+              this,
+              Invocation.method(#ref, [path]),
+            ),
+          )
+          as _i9.Reference);
+
+  @override
+  _i9.Reference refFromURL(String? url) =>
+      (super.noSuchMethod(
+            Invocation.method(#refFromURL, [url]),
+            returnValue: _FakeReference_22(
+              this,
+              Invocation.method(#refFromURL, [url]),
+            ),
+          )
+          as _i9.Reference);
+
+  @override
+  void setMaxOperationRetryTime(Duration? time) => super.noSuchMethod(
+    Invocation.method(#setMaxOperationRetryTime, [time]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void setMaxUploadRetryTime(Duration? time) => super.noSuchMethod(
+    Invocation.method(#setMaxUploadRetryTime, [time]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void setMaxDownloadRetryTime(Duration? time) => super.noSuchMethod(
+    Invocation.method(#setMaxDownloadRetryTime, [time]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i7.Future<void> useStorageEmulator(
+    String? host,
+    int? port, {
+    bool? automaticHostMapping = true,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #useStorageEmulator,
+              [host, port],
+              {#automaticHostMapping: automaticHostMapping},
+            ),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
 }

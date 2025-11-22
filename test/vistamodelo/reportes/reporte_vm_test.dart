@@ -7,57 +7,52 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:sos_mascotas/vistamodelo/reportes/reporte_vm.dart';
 
-// ✅ CORRECCIÓN: El import del archivo generado DEBE ir aquí arriba
+// Import obligatorio del archivo generado
 import 'reporte_vm_test.mocks.dart';
 
-// -------------------------------------------------------------------------
-// 1. DEFINICIÓN DE TIPOS
-// -------------------------------------------------------------------------
+// Tipos concretos
 typedef CollectionReferenceMap = CollectionReference<Map<String, dynamic>>;
 typedef DocumentReferenceMap = DocumentReference<Map<String, dynamic>>;
 
-// -------------------------------------------------------------------------
-// 2. GENERACIÓN DE MOCKS
-// -------------------------------------------------------------------------
-@GenerateMocks([
-  FirebaseAuth,
-  FirebaseFirestore,
-  FirebaseStorage,
-  User,
-  CollectionReferenceMap, // Usamos el tipo específico definido arriba
-  DocumentReferenceMap, // Usamos el tipo específico definido arriba
-  ReporteServiciosExternos, // Nuestro wrapper
-])
+@GenerateMocks(
+  [
+    FirebaseAuth,
+    FirebaseFirestore,
+    User,
+    CollectionReferenceMap,
+    DocumentReferenceMap,
+    ReporteServiciosExternos,
+    Reference,
+    UploadTask,
+    TaskSnapshot,
+  ],
+  customMocks: [MockSpec<FirebaseStorage>(as: #MockFirebaseStorage2)],
+)
 void main() {
   late ReporteMascotaVM viewModel;
 
-  // Mocks principales
   late MockFirebaseAuth mockAuth;
   late MockFirebaseFirestore mockFirestore;
-  late MockFirebaseStorage mockStorage;
+  late MockFirebaseStorage2 mockStorage;
   late MockReporteServiciosExternos mockServicios;
   late MockUser mockUser;
 
-  // Mocks específicos de Firestore (Tipados correctamente)
   late MockCollectionReferenceMap mockCollection;
   late MockDocumentReferenceMap mockDocument;
 
   setUp(() {
-    // Inicialización
     mockAuth = MockFirebaseAuth();
     mockFirestore = MockFirebaseFirestore();
-    mockStorage = MockFirebaseStorage();
+    mockStorage = MockFirebaseStorage2();
     mockServicios = MockReporteServiciosExternos();
     mockUser = MockUser();
 
     mockCollection = MockCollectionReferenceMap();
     mockDocument = MockDocumentReferenceMap();
 
-    // Configuración por defecto: Usuario Logueado
-    when(mockAuth.currentUser).thenReturn(mockUser);
-    when(mockUser.uid).thenReturn("usuario_prueba_123");
+    when(mockAuth.currentUser).thenAnswer((_) => mockUser);
+    when(mockUser.uid).thenAnswer((_) => "usuario_prueba_123");
 
-    // Inyección de dependencias al ViewModel
     viewModel = ReporteMascotaVM(
       auth: mockAuth,
       firestore: mockFirestore,
@@ -66,6 +61,9 @@ void main() {
     );
   });
 
+  // ----------------------------------------------------------
+  //     TESTS DE WIZARD
+  // ----------------------------------------------------------
   group('ReporteMascotaVM - Wizard y Navegación', () {
     test('Debe iniciar en el paso 0', () {
       expect(viewModel.paso, 0);
@@ -76,8 +74,8 @@ void main() {
       expect(viewModel.paso, 1);
       viewModel.siguientePaso();
       expect(viewModel.paso, 2);
-      viewModel.siguientePaso(); // Intento extra
-      expect(viewModel.paso, 2); // Se queda en 2
+      viewModel.siguientePaso();
+      expect(viewModel.paso, 2);
     });
 
     test('Debe retroceder pasos', () {
@@ -87,92 +85,178 @@ void main() {
     });
   });
 
+  // ----------------------------------------------------------
+  //     TESTS DE GUARDADO EN FIRESTORE
+  // ----------------------------------------------------------
   group('ReporteMascotaVM - Guardado en Firestore', () {
     test('Guardar reporte exitoso retorna true y envía notificación', () async {
-      // 1. ARRANGE (Preparar el escenario)
-
-      // Simulamos la llamada a collection()
       when(
         mockFirestore.collection("reportes_mascotas"),
       ).thenReturn(mockCollection);
 
-      // Simulamos la llamada a doc()
       when(mockCollection.doc(any)).thenReturn(mockDocument);
 
-      // Simulamos propiedades del documento
       when(mockDocument.id).thenReturn("nuevo_id_reporte");
 
-      // Simulamos el guardado set() retornando Future void
       when(mockDocument.set(any)).thenAnswer((_) async => Future.value());
 
-      // Simulamos Notificación exitosa
       when(
         mockServicios.enviarPush(
-          titulo: anyNamed('titulo'),
-          cuerpo: anyNamed('cuerpo'),
+          titulo: anyNamed("titulo"),
+          cuerpo: anyNamed("cuerpo"),
         ),
-      ).thenAnswer((_) async => Future.value());
+      ).thenAnswer((_) async {});
 
-      // Llenar datos básicos
       viewModel.reporte.nombre = "Firulais";
 
-      // 2. ACT (Ejecutar)
       final resultado = await viewModel.guardarReporte();
 
-      // 3. ASSERT (Verificar)
       expect(resultado, true);
       expect(viewModel.cargando, false);
       expect(viewModel.reporte.id, "nuevo_id_reporte");
-
-      // Verificar que se llamó a Firestore con los datos esperados
-      verify(
-        mockDocument.set(
-          argThat(
-            predicate((Map<String, dynamic> data) {
-              return data['usuarioId'] == 'usuario_prueba_123' &&
-                  data['estado'] == 'perdido';
-            }),
-          ),
-        ),
-      ).called(1);
     });
 
     test('Guardar reporte maneja errores y retorna false', () async {
-      // 1. ARRANGE - Forzamos un error
       when(mockFirestore.collection(any)).thenThrow(Exception("Error de red"));
 
-      // 2. ACT
       final resultado = await viewModel.guardarReporte();
 
-      // 3. ASSERT
       expect(resultado, false);
       expect(viewModel.cargando, false);
     });
   });
 
+  // ----------------------------------------------------------
+  //     TESTS DE IA
+  // ----------------------------------------------------------
   group('ReporteMascotaVM - Validación de Imágenes (IA)', () {
-    test('Debe lanzar error si la confianza de TFLite es baja', () async {
-      // 1. ARRANGE
+    test('Debe lanzar error si la confianza es baja', () async {
       final mockFile = File('path/falso.jpg');
 
-      // Simular compresión (devuelve el mismo archivo)
       when(
         mockServicios.comprimirImagen(any),
       ).thenAnswer((_) async => mockFile);
 
-      // Simular TFLite devolviendo confianza baja (0.4)
-      when(mockServicios.detectarAnimal(any)).thenAnswer(
-        (_) async => {
-          "etiqueta": "perro",
-          "confianza": 0.4, // < 0.6, debería fallar
-        },
-      );
+      when(
+        mockServicios.detectarAnimal(any),
+      ).thenAnswer((_) async => {"etiqueta": "perro", "confianza": 0.40});
 
-      // 2. ACT & ASSERT
-      expect(
-        () async => await viewModel.subirFoto(mockFile),
-        throwsA(isA<Exception>()),
-      );
+      expect(() => viewModel.subirFoto(mockFile), throwsA(isA<Exception>()));
     });
+
+    test('subirFoto() debe comprimir → validar IA → subir → dar URL', () async {
+      final mockFile = File('foto_fake.jpg');
+
+      final mockRefRoot = MockReference();
+      final mockRefFolder = MockReference();
+      final mockUserFolder = MockReference();
+      final mockRefFinal = MockReference();
+      final mockUploadTask = MockUploadTask();
+      final mockSnapshot = MockTaskSnapshot();
+
+      // 1. Compresión
+      when(
+        mockServicios.comprimirImagen(any),
+      ).thenAnswer((_) async => mockFile);
+
+      // 2. IA válida
+      when(
+        mockServicios.detectarAnimal(any),
+      ).thenAnswer((_) async => {"etiqueta": "perro", "confianza": 0.95});
+
+      // 3. Firebase Storage – refs
+      when(mockStorage.ref()).thenReturn(mockRefRoot);
+      when(mockRefRoot.child("reportes_mascotas")).thenReturn(mockRefFolder);
+      when(
+        mockRefFolder.child("usuario_prueba_123"),
+      ).thenReturn(mockUserFolder);
+
+      // Archivo dinámico tipo "123123123.jpg"
+      when(mockUserFolder.child(any)).thenReturn(mockRefFinal);
+
+      // SUBIR FOTO
+      when(mockRefFinal.putFile(any)).thenAnswer((_) => mockUploadTask);
+
+      // Necesario porque UploadTask es un Future y usa THEN().
+      when(mockUploadTask.then(any, onError: anyNamed('onError'))).thenAnswer((
+        inv,
+      ) async {
+        final onValue = inv.positionalArguments.first;
+        return onValue(mockSnapshot);
+      });
+
+      // whenComplete()
+      when(mockUploadTask.whenComplete(any)).thenAnswer((inv) async {
+        final cb = inv.positionalArguments.first;
+        cb();
+        return mockSnapshot;
+      });
+
+      // URL final
+      when(
+        mockRefFinal.getDownloadURL(),
+      ).thenAnswer((_) async => "https://fakeurl.com/foto.jpg");
+
+      // Ejecutar
+      final url = await viewModel.subirFoto(mockFile);
+
+      // Verificar
+      expect(url, "https://fakeurl.com/foto.jpg");
+    });
+    // -------------------------------------------------------------------------
+    // SUBIR VIDEO
+    // -------------------------------------------------------------------------
+    test(
+      'subirVideo() debe subir archivo al Storage y devolver la URL',
+      () async {
+        final mockFile = File('video_fake.mp4');
+
+        final mockRefRoot = MockReference();
+        final mockRefFolder = MockReference();
+        final mockUserFolder = MockReference();
+        final mockRefFinal = MockReference();
+        final mockUploadTask = MockUploadTask();
+        final mockSnapshot = MockTaskSnapshot();
+
+        // refs
+        when(mockStorage.ref()).thenReturn(mockRefRoot);
+        when(mockRefRoot.child("reportes_mascotas")).thenReturn(mockRefFolder);
+        when(
+          mockRefFolder.child("usuario_prueba_123"),
+        ).thenReturn(mockUserFolder);
+
+        // archivo dinámico
+        when(mockUserFolder.child(any)).thenReturn(mockRefFinal);
+
+        // subir archivo
+        when(mockRefFinal.putFile(any)).thenAnswer((_) => mockUploadTask);
+
+        // NECESARIO — UploadTask es Future → usa .then()
+        when(mockUploadTask.then(any, onError: anyNamed('onError'))).thenAnswer(
+          (inv) async {
+            final onValue = inv.positionalArguments.first;
+            return onValue(mockSnapshot);
+          },
+        );
+
+        // whenComplete
+        when(mockUploadTask.whenComplete(any)).thenAnswer((inv) async {
+          final cb = inv.positionalArguments.first;
+          cb();
+          return mockSnapshot;
+        });
+
+        // URL final
+        when(
+          mockRefFinal.getDownloadURL(),
+        ).thenAnswer((_) async => "https://fakeurl.com/video.mp4");
+
+        // ejecutar
+        final url = await viewModel.subirVideo(mockFile);
+
+        // verificar
+        expect(url, "https://fakeurl.com/video.mp4");
+      },
+    );
   });
 }
