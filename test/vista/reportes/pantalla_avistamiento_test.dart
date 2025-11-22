@@ -46,6 +46,10 @@ class FakePantallaMapaOSM extends StatelessWidget {
   }
 }
 
+Future<DateTime?> fakeDatePicker(BuildContext context, DateTime initial) async {
+  return DateTime(2024, 12, 25); // 🎯 FECHA SIMULADA
+}
+
 // ⭐ Contenedor especial para interceptar Navigator.push
 Widget buildTestApp(Widget child) {
   return MaterialApp(
@@ -81,10 +85,20 @@ void main() {
 
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    Future<DateTime?> fakeDatePicker(
+      BuildContext context,
+      DateTime initialDate,
+    ) async {
+      return DateTime(2025, 1, 15);
+    }
 
     await tester.pumpWidget(
       MaterialApp(
-        home: PantallaAvistamiento(viewModelTest: mockVM, pickerTest: picker),
+        home: PantallaAvistamiento(
+          viewModelTest: mockVM,
+          pickerTest: picker,
+          datePickerTest: fakeDatePicker, // ✔ ya existe
+        ),
       ),
     );
 
@@ -255,6 +269,42 @@ void main() {
         (tester.widget(txtDireccion) as TextFormField).controller!.text,
         equals("Av. Patricio Melendez 123"),
       );
+    });
+    testWidgets("Debe seleccionar fecha usando el datePicker", (tester) async {
+      when(mockVM.avistamiento).thenReturn(Avistamiento());
+      await tester.pumpWidget(
+        buildTestApp(
+          PantallaAvistamiento(
+            viewModelTest: mockVM,
+            datePickerTest: fakeDatePicker,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Hacer visible el campo
+      final campoFecha = find.byKey(const Key("fieldFecha"));
+
+      await tester.scrollUntilVisible(
+        campoFecha,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      await tester.pumpAndSettle();
+
+      // Simular tap → abre el fake date picker
+      await tester.tap(campoFecha);
+      await tester.pumpAndSettle();
+
+      // Validar que el controlador cambió
+      final widgetFecha = tester.widget<TextFormField>(campoFecha);
+
+      expect(widgetFecha.controller!.text, "25/12/2024");
+
+      // Validar que se actualizó el VM
+      expect(mockVM.avistamiento.fechaAvistamiento, equals("25/12/2024"));
     });
   });
 }

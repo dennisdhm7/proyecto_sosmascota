@@ -9,12 +9,14 @@ class PantallaAvistamiento extends StatelessWidget {
   final AvistamientoVM? viewModelTest;
   final ImagePicker? pickerTest;
   final Widget? mapaTest;
+  final Future<DateTime?> Function(BuildContext, DateTime)? datePickerTest;
 
   const PantallaAvistamiento({
     super.key,
     this.viewModelTest,
     this.pickerTest,
     this.mapaTest,
+    this.datePickerTest,
   });
 
   @override
@@ -24,6 +26,7 @@ class PantallaAvistamiento extends StatelessWidget {
       child: _FormularioAvistamiento(
         pickerTest: pickerTest, // 👈 PASAMOS EL PICKER INYECTADO
         mapaTest: mapaTest,
+        datePickerTest: datePickerTest,
       ),
     );
   }
@@ -32,8 +35,13 @@ class PantallaAvistamiento extends StatelessWidget {
 class _FormularioAvistamiento extends StatefulWidget {
   final ImagePicker? pickerTest; // 👈 ACEPTAMOS EL PICKER
   final Widget? mapaTest;
+  final Future<DateTime?> Function(BuildContext, DateTime)? datePickerTest;
 
-  const _FormularioAvistamiento({this.pickerTest, this.mapaTest});
+  const _FormularioAvistamiento({
+    this.pickerTest,
+    this.mapaTest,
+    this.datePickerTest,
+  });
 
   @override
   State<_FormularioAvistamiento> createState() =>
@@ -271,12 +279,14 @@ class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
                           ),
                         ),
                         onTap: () async {
-                          final fecha = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime.now(),
-                          );
+                          final fecha = await (widget.datePickerTest != null
+                              ? widget.datePickerTest!(context, DateTime.now())
+                              : showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                ));
                           if (fecha != null) {
                             final strFecha =
                                 "${fecha.day}/${fecha.month}/${fecha.year}";
@@ -365,7 +375,7 @@ class _FormularioAvistamientoState extends State<_FormularioAvistamiento> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.orange.withOpacity(0.3),
+                          color: Colors.orange.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
