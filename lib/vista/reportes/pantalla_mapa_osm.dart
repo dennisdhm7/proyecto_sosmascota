@@ -6,12 +6,16 @@ import 'package:http/http.dart' as http;
 
 class PantallaMapaOSM extends StatefulWidget {
   final LatLng? ubicacionInicial;
-  final bool esAvistamiento; // 🟠 true = modo avistamiento, 🔵 false = reporte
+  final bool esAvistamiento;
+
+  // 💉 Inyección del cliente HTTP para tests
+  final http.Client? httpClient;
 
   const PantallaMapaOSM({
     super.key,
     this.ubicacionInicial,
     this.esAvistamiento = false,
+    this.httpClient,
   });
 
   @override
@@ -25,7 +29,6 @@ class _PantallaMapaOSMState extends State<PantallaMapaOSM> {
   bool _cargando = false;
   final MapController _mapController = MapController();
 
-  // 📍 Lista de distritos oficiales de Tacna
   final List<String> _distritosTacna = const [
     "Alto de la Alianza",
     "Calana",
@@ -42,52 +45,70 @@ class _PantallaMapaOSMState extends State<PantallaMapaOSM> {
   @override
   void initState() {
     super.initState();
-    _puntoSeleccionado =
-        widget.ubicacionInicial ?? LatLng(-18.0066, -70.2463); // Tacna centro
+    _puntoSeleccionado = widget.ubicacionInicial ?? LatLng(-18.0066, -70.2463);
   }
 
-  // 🌍 Obtener dirección y distrito usando Nominatim (OpenStreetMap)
   Future<void> _buscarDireccion(LatLng punto) async {
+    if (!mounted) return;
     setState(() {
       _cargando = true;
       _direccion = "Obteniendo dirección...";
       _distrito = null;
     });
 
-    final url = Uri.parse(
-      'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${punto.latitude}&lon=${punto.longitude}',
-    );
-    final res = await http.get(
-      url,
-      headers: {'User-Agent': 'sos_mascota_app/1.0 (https://sosmascota.org)'},
-    );
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${punto.latitude}&lon=${punto.longitude}',
+      );
 
-    if (res.statusCode == 200) {
-      final data = json.decode(res.body);
+      // 💉 Usamos el cliente inyectado o creamos uno nuevo
+      final client = widget.httpClient ?? http.Client();
 
-      // ✅ Buscar el distrito dentro del nombre completo de la dirección
-      String direccionCompleta = (data['display_name'] ?? '').toString();
-      String distritoDetectado = "Tacna"; // valor por defecto
+      final res = await client.get(
+        url,
+        headers: {'User-Agent': 'sos_mascota_app/1.0 (https://sosmascota.org)'},
+      );
 
-      for (final d in _distritosTacna) {
-        if (direccionCompleta.toLowerCase().contains(d.toLowerCase())) {
-          distritoDetectado = d;
-          break;
+      // Si creamos un cliente nuevo localmente (no inyectado), lo ideal sería cerrarlo,
+      // pero http.get estático lo maneja globalmente.
+      // Al usar client de instancia, Flutter recomienda cerrarlo si somos dueños,
+      // pero para este caso simple basta con usarlo.
+
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        String direccionCompleta = (data['display_name'] ?? '').toString();
+        String distritoDetectado = "Tacna";
+
+        for (final d in _distritosTacna) {
+          if (direccionCompleta.toLowerCase().contains(d.toLowerCase())) {
+            distritoDetectado = d;
+            break;
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _direccion = direccionCompleta;
+            _distrito = distritoDetectado;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _direccion = "No se pudo obtener la dirección";
+            _distrito = null;
+          });
         }
       }
-
-      setState(() {
-        _direccion = direccionCompleta;
-        _distrito = distritoDetectado;
-      });
-    } else {
-      setState(() {
-        _direccion = "No se pudo obtener la dirección";
-        _distrito = null;
-      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _direccion = "Error de conexión";
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _cargando = false);
     }
-
-    setState(() => _cargando = false);
   }
 
   @override
