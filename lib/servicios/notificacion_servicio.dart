@@ -12,13 +12,21 @@ class NotificacionServicio {
   static final _db = FirebaseFirestore.instance;
 
   /// ✅ Guardar notificación en Firestore
-  static Future<void> guardarNotificacion(Notificacion notif) async {
-    await _db.collection('notificaciones').add(notif.toMap());
+  static Future<void> guardarNotificacion(
+    Notificacion notif, {
+    FirebaseFirestore? db,
+  }) async {
+    final usedDb = db ?? _db;
+    await usedDb.collection('notificaciones').add(notif.toMap());
   }
 
   /// ✅ Obtener notificaciones de un usuario en tiempo real
-  static Stream<List<Notificacion>> obtenerNotificaciones(String usuarioId) {
-    return _db
+  static Stream<List<Notificacion>> obtenerNotificaciones(
+    String usuarioId, {
+    FirebaseFirestore? db,
+  }) {
+    final usedDb = db ?? _db;
+    return usedDb
         .collection('notificaciones')
         .where('usuarioId', isEqualTo: usuarioId)
         .orderBy('fecha', descending: true)
@@ -34,18 +42,35 @@ class NotificacionServicio {
   static Future<void> enviarPush({
     required String titulo,
     required String cuerpo,
+    FirebaseFirestore? db,
+    FirebaseAuth? auth,
+    dynamic httpClient,
+    String? jsonKeyContent,
   }) async {
     try {
-      // 1️⃣ Leer credenciales del archivo JSON
-      final contenido = await rootBundle.loadString(_jsonKeyPath);
-      final jsonKey = jsonDecode(contenido);
-      debugPrint("✅ Credenciales cargadas ($_jsonKeyPath)");
+      final usedDb = db ?? _db;
+      final usedAuth = auth ?? FirebaseAuth.instance;
 
-      // 2️⃣ Crear cliente autorizado para FCM
-      final serviceAccount = ServiceAccountCredentials.fromJson(
-        jsonEncode(jsonKey),
-      );
-      final client = await clientViaServiceAccount(serviceAccount, _scopes);
+      Map<String, dynamic> jsonKey;
+      dynamic client;
+
+      if (httpClient == null) {
+        // 1️⃣ Leer credenciales del archivo JSON
+        final contenido =
+            jsonKeyContent ?? await rootBundle.loadString(_jsonKeyPath);
+        jsonKey = jsonDecode(contenido);
+        debugPrint("✅ Credenciales cargadas ($_jsonKeyPath)");
+
+        // 2️⃣ Crear cliente autorizado para FCM
+        final serviceAccount = ServiceAccountCredentials.fromJson(
+          jsonEncode(jsonKey),
+        );
+        client = await clientViaServiceAccount(serviceAccount, _scopes);
+      } else {
+        // si nos pasan httpClient en tests, no necesitamos credenciales
+        jsonKey = {};
+        client = httpClient;
+      }
 
       // 3️⃣ Configurar mensaje para el topic global
       final projectId = jsonKey['project_id'];
@@ -67,21 +92,21 @@ class NotificacionServicio {
       );
 
       debugPrint('📨 FCM respuesta: ${response.statusCode} → ${response.body}');
-      client.close();
+      if (httpClient == null) client.close();
 
       // 5️⃣ Guardar las notificaciones en Firestore (de forma eficiente)
-      final currentUid = FirebaseAuth.instance.currentUser?.uid;
+      final currentUid = usedAuth.currentUser?.uid;
 
-      final usuariosSnap = await _db
+      final usuariosSnap = await usedDb
           .collection('usuarios')
           .where(FieldPath.documentId, isNotEqualTo: currentUid)
           .get();
 
-      final batch = _db.batch();
+      final batch = usedDb.batch();
 
       // 🔹 Notificaciones para todos los demás usuarios
       for (var usuario in usuariosSnap.docs) {
-        final ref = _db.collection('notificaciones').doc();
+        final ref = usedDb.collection('notificaciones').doc();
         batch.set(ref, {
           'usuarioId': usuario.id,
           'titulo': titulo,
@@ -93,7 +118,7 @@ class NotificacionServicio {
 
       // 🔹 Notificación solo local para el emisor
       if (currentUid != null) {
-        final ref = _db.collection('notificaciones').doc();
+        final ref = usedDb.collection('notificaciones').doc();
         batch.set(ref, {
           'usuarioId': currentUid,
           'titulo': 'Se generó tu reporte',
@@ -118,14 +143,28 @@ class NotificacionServicio {
     required String titulo,
     required String cuerpo,
     required String usuarioId,
+    FirebaseFirestore? db,
+    dynamic httpClient,
+    String? jsonKeyContent,
   }) async {
     try {
-      final contenido = await rootBundle.loadString(_jsonKeyPath);
-      final jsonKey = jsonDecode(contenido);
-      final serviceAccount = ServiceAccountCredentials.fromJson(
-        jsonEncode(jsonKey),
-      );
-      final client = await clientViaServiceAccount(serviceAccount, _scopes);
+      final usedDb = db ?? _db;
+
+      Map<String, dynamic> jsonKey;
+      dynamic client;
+
+      if (httpClient == null) {
+        final contenido =
+            jsonKeyContent ?? await rootBundle.loadString(_jsonKeyPath);
+        jsonKey = jsonDecode(contenido);
+        final serviceAccount = ServiceAccountCredentials.fromJson(
+          jsonEncode(jsonKey),
+        );
+        client = await clientViaServiceAccount(serviceAccount, _scopes);
+      } else {
+        jsonKey = {};
+        client = httpClient;
+      }
 
       final projectId = jsonKey['project_id'];
       final url =
@@ -147,10 +186,10 @@ class NotificacionServicio {
       debugPrint(
         '📩 Push individual enviado → ${response.statusCode}: ${response.body}',
       );
-      client.close();
+      if (httpClient == null) client.close();
 
       // 💾 Guardar notificación Firestore (solo para el usuario destino)
-      await _db.collection('notificaciones').add({
+      await usedDb.collection('notificaciones').add({
         'usuarioId': usuarioId,
         'titulo': titulo,
         'mensaje': cuerpo,
