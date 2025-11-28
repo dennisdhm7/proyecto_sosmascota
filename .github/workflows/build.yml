@@ -113,7 +113,9 @@ jobs:
         uses: snyk/actions/setup@master
       
       - name: Snyk Test
-        run: snyk test --file=pubspec.yaml
+        # Quitamos --file=pubspec.yaml para que auto-descubra
+        # Agregamos --all-projects para que busque en carpetas anidadas si las hay
+        run: snyk test --all-projects
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true # Cambia a false si quieres que el build falle si encuentra vulnerabilidades
+        continue-on-error: true
