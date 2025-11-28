@@ -115,7 +115,7 @@ jobs:
       - name: Snyk Test
         # Quitamos --file=pubspec.yaml para que auto-descubra
         # Agregamos --all-projects para que busque en carpetas anidadas si las hay
-        run: snyk test --all-projects
+        run: snyk test --all-projects --exclude=ios,android,linux,macos,windows,web,build
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
