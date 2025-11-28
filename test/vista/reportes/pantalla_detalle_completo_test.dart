@@ -206,5 +206,27 @@ void main() {
       // Verificar que NO hay recompensa
       expect(find.text("Recompensa ofrecida"), findsNothing);
     });
+    testWidgets('Muestra placeholder (Icons.pets) cuando NO hay foto', (
+      tester,
+    ) async {
+      // 1. Preparamos data SIN fotos
+      final dataSinFoto = {
+        "id": "reporte_sin_foto",
+        "usuarioId": "user_1",
+        "tipo": "Perro",
+        "estado": "PERDIDO",
+        "fotos": [], // 👈 Lista vacía para forzar el else
+        "detalles": "Sin foto",
+      };
+
+      // 2. Cargamos la pantalla
+      await cargarPantalla(tester, data: dataSinFoto, tipo: 'reporte');
+      await tester.pumpAndSettle();
+
+      // 3. Verificamos que se muestre el contenedor gris con el ícono de mascota
+      expect(find.byIcon(Icons.pets), findsOneWidget);
+      // Aseguramos que NO intente buscar una imagen de red
+      expect(find.byType(Image), findsNothing);
+    });
   });
 }

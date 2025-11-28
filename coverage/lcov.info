@@ -1024,8 +1024,8 @@ DA:151,1
 DA:152,1
 DA:155,1
 DA:156,1
-DA:159,2
-DA:160,0
+DA:159,4
+DA:160,1
 DA:161,1
 DA:162,4
 DA:163,1
@@ -1055,8 +1055,8 @@ DA:213,1
 DA:214,1
 DA:219,0
 DA:221,0
-DA:225,0
-DA:227,0
+DA:225,1
+DA:227,1
 DA:234,1
 DA:237,1
 DA:242,1
@@ -1190,7 +1190,7 @@ DA:601,1
 DA:602,1
 DA:606,1
 LF:235
-LH:172
+LH:175
 end_of_record
 SF:lib\vista\mapa\pantalla_mapa_interactivo.dart
 DA:14,1
@@ -1380,7 +1380,7 @@ LF:12
 LH:12
 end_of_record
 SF:lib\vista\reportes\pantalla_mapa_osm.dart
-DA:14,2
+DA:14,1
 DA:21,1
 DA:22,1
 DA:45,1
