@@ -4,11 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:sos_mascotas/vista/reportes/pantalla_detalle_completo.dart';
 
 class PantallaMisReportes extends StatelessWidget {
-  const PantallaMisReportes({super.key});
+  final FirebaseAuth? auth;
+  final FirebaseFirestore? firestore;
+  final Widget Function(Map<String, dynamic> data, String tipo)? detalleBuilder;
+
+  const PantallaMisReportes({
+    super.key,
+    this.auth,
+    this.firestore,
+    this.detalleBuilder,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final _auth = auth ?? FirebaseAuth.instance;
+    final _firestore = firestore ?? FirebaseFirestore.instance;
+
+    final uid = _auth.currentUser?.uid;
 
     if (uid == null) {
       return const Scaffold(
@@ -16,12 +28,12 @@ class PantallaMisReportes extends StatelessWidget {
       );
     }
 
-    final reportesRef = FirebaseFirestore.instance
+    final reportesRef = _firestore
         .collection("reportes_mascotas")
         .where("usuarioId", isEqualTo: uid)
         .orderBy("fechaRegistro", descending: true);
 
-    final avistamientosRef = FirebaseFirestore.instance
+    final avistamientosRef = _firestore
         .collection("avistamientos")
         .where("usuarioId", isEqualTo: uid)
         .orderBy("fechaRegistro", descending: true);
@@ -53,10 +65,15 @@ class PantallaMisReportes extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            _ListaReportes(stream: reportesRef.snapshots(), tipo: "reporte"),
+            _ListaReportes(
+              stream: reportesRef.snapshots(),
+              tipo: "reporte",
+              detalleBuilder: detalleBuilder,
+            ),
             _ListaReportes(
               stream: avistamientosRef.snapshots(),
               tipo: "avistamiento",
+              detalleBuilder: detalleBuilder,
             ),
           ],
         ),
@@ -68,8 +85,13 @@ class PantallaMisReportes extends StatelessWidget {
 class _ListaReportes extends StatelessWidget {
   final Stream<QuerySnapshot> stream;
   final String tipo;
+  final Widget Function(Map<String, dynamic> data, String tipo)? detalleBuilder;
 
-  const _ListaReportes({required this.stream, required this.tipo});
+  const _ListaReportes({
+    required this.stream,
+    required this.tipo,
+    this.detalleBuilder,
+  });
 
   // 🟢 Cambiar estado de reporte
   Future<void> _cambiarEstado(
@@ -298,10 +320,12 @@ class _ListaReportes extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => PantallaDetalleCompleto(
-                      data: dataConId,
-                      tipo: tipo, // "reporte" o "avistamiento"
-                    ),
+                    builder: (_) => detalleBuilder != null
+                        ? detalleBuilder!(dataConId, tipo)
+                        : PantallaDetalleCompleto(
+                            data: dataConId,
+                            tipo: tipo, // "reporte" o "avistamiento"
+                          ),
                   ),
                 );
               },
