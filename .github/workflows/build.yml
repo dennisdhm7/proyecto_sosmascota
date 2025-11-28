@@ -94,28 +94,29 @@ jobs:
   security-snyk:
     name: Security - Snyk
     runs-on: ubuntu-latest
-    needs: sonarcloud # Opcional: Si prefieres que corra paralelo, quita esta línea
+    # Eliminamos 'needs' para que corra en paralelo
     steps:
       - uses: actions/checkout@v3
       
-      # Snyk necesita Flutter para entender el pubspec correctamente
+      # 1. Instalamos Flutter (Necesario para generar el lockfile correcto)
       - name: Set up Flutter for Snyk
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version: '3.35.2'
           
+      # 2. Generamos el pubspec.lock (VITAL para Snyk)
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run Snyk to check for vulnerabilities
-        # Usamos una acción genérica o el CLI. La acción oficial de node suele funcionar bien instalando snyk
+      # 3. Instalamos Snyk CLI
+      - name: Setup Snyk
         uses: snyk/actions/setup@master
-      
+
+      # 4. Ejecutamos Snyk apuntando al LOCKFILE
+      # Esto es lo que soluciona el error de "Could not detect..."
       - name: Snyk Test
-        # Quitamos --file=pubspec.yaml para que auto-descubra
-        # Agregamos --all-projects para que busque en carpetas anidadas si las hay
-        run: snyk test --all-projects --exclude=ios,android,linux,macos,windows,web,build
+        run: snyk test --file=pubspec.lock
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
