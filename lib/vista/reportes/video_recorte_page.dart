@@ -6,15 +6,16 @@ import '../../vistamodelo/reportes/reporte_vm.dart';
 
 class VideoRecortePage extends StatefulWidget {
   final File videoFile;
+  final dynamic trimmer;
 
-  const VideoRecortePage({super.key, required this.videoFile});
+  const VideoRecortePage({super.key, required this.videoFile, this.trimmer});
 
   @override
   State<VideoRecortePage> createState() => _VideoRecortePageState();
 }
 
 class _VideoRecortePageState extends State<VideoRecortePage> {
-  final Trimmer _trimmer = Trimmer();
+  late final dynamic _trimmer;
   double _startValue = 0.0;
   double _endValue = 10.0;
   bool _cargando = false;
@@ -22,6 +23,7 @@ class _VideoRecortePageState extends State<VideoRecortePage> {
   @override
   void initState() {
     super.initState();
+    _trimmer = widget.trimmer ?? Trimmer();
     _trimmer.loadVideo(videoFile: widget.videoFile);
   }
 
