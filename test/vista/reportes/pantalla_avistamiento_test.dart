@@ -65,9 +65,19 @@ Widget buildTestApp(Widget child) {
 
 void main() {
   late MockAvistamientoVM mockVM;
-
+  VoidCallback? listenerCapturado;
   setUp(() {
     mockVM = MockAvistamientoVM();
+    listenerCapturado = null; // Resetear siempre
+
+    // COBERTURA MÁGICA 1:
+    // Cuando la pantalla llame a 'addListener', nosotros robamos esa función
+    // y la guardamos en 'listenerCapturado' para usarla después.
+    when(mockVM.addListener(any)).thenAnswer((invocation) {
+      listenerCapturado = invocation.positionalArguments.first as VoidCallback;
+    });
+
+    // ... (resto de tus configuraciones de mocks: avistamiento, cargando, etc.)
     when(mockVM.avistamiento).thenReturn(Avistamiento());
     when(mockVM.cargando).thenReturn(false);
     when(mockVM.estado).thenReturn(EstadoCarga.inicial);
@@ -305,6 +315,124 @@ void main() {
 
       // Validar que se actualizó el VM
       expect(mockVM.avistamiento.fechaAvistamiento, equals("25/12/2024"));
+    });
+
+    // ✅ TEST PARA CUBRIR LA LÓGICA DEL LISTENER (SnackBar)
+    testWidgets('Debe mostrar SnackBar cuando el VM reporta un error', (
+      tester,
+    ) async {
+      await cargarPantalla(tester);
+
+      // 1. Aseguramos que el listener fue capturado en el initState
+      expect(
+        listenerCapturado,
+        isNotNull,
+        reason: "El addListener no fue llamado",
+      );
+
+      // 2. SIMULAMOS CAMBIO DE ESTADO EN EL VM
+      // Cambiamos lo que devuelve el Mock para simular el error
+      when(mockVM.mensajeUsuario).thenReturn("Error de conexión");
+      when(mockVM.estado).thenReturn(EstadoCarga.error);
+
+      // 3. ¡DISPARAMOS EL EVENTO MANUALMENTE!
+      // Esto es equivalente a que el VM haga notifyListeners()
+      listenerCapturado!();
+
+      // 4. Redibujamos la pantalla para que procese el cambio
+      await tester.pump();
+
+      // 5. Verificamos que el SnackBar apareció
+      expect(find.text("Error de conexión"), findsOneWidget);
+      expect(find.byType(SnackBar), findsOneWidget);
+
+      // Verificamos que se llamó a limpiarMensaje
+      verify(mockVM.limpiarMensaje()).called(1);
+    });
+
+    // ✅ TEST PARA CUBRIR NAVEGACIÓN (Pop)
+    testWidgets('Debe cerrar la pantalla (pop) cuando el estado es Exito', (
+      tester,
+    ) async {
+      await cargarPantalla(tester);
+
+      // 1. Validamos captura
+      expect(listenerCapturado, isNotNull);
+
+      // 2. Simulamos Éxito
+      when(mockVM.estado).thenReturn(EstadoCarga.exito);
+      when(mockVM.mensajeUsuario).thenReturn("Guardado"); // Opcional
+
+      // 3. Disparamos listener
+      listenerCapturado!();
+
+      // 4. Pump y Settle (para que termine la animación de cierre)
+      await tester.pumpAndSettle();
+
+      // 5. Verificamos que ya no estamos en la pantalla
+      // (Buscamos un widget que sabíamos que estaba ahí, ahora no debería estar)
+      expect(find.text('Registrar Avistamiento'), findsNothing);
+    });
+    testWidgets('Debe seleccionar imagen desde CÁMARA y llamar a subirFoto()', (
+      tester,
+    ) async {
+      // 1. Preparamos la respuesta del Mock
+      when(
+        mockVM.subirFoto(any),
+      ).thenAnswer((_) async => "https://foto_camara.jpg");
+
+      // 2. Preparamos el Picker Falso
+      final fakePicker = FakeImagePicker();
+      fakePicker.fileToReturn = XFile("camara.jpg");
+
+      // 3. Cargamos la pantalla
+      await cargarPantalla(tester, picker: fakePicker);
+
+      // 4. Buscamos el botón de CÁMARA (btnCamara)
+      final btnCamara = find.byKey(const Key('btnCamara'));
+
+      await tester.scrollUntilVisible(
+        btnCamara,
+        300,
+        scrollable: mainScrollFinder,
+      );
+
+      // 5. Hacemos Tap
+      await tester.tap(btnCamara);
+      await tester.pumpAndSettle();
+
+      // 6. Verificamos que se llamó a la lógica
+      // Esto ejecuta la línea 173: _seleccionarImagen(ImageSource.camera, vm)
+      verify(mockVM.subirFoto(any)).called(1);
+
+      // (Opcional) Verificar que la foto se agregó a la lista visual
+      final state =
+          tester.state(
+                find.byWidgetPredicate(
+                  (w) => w.runtimeType.toString() == "_FormularioAvistamiento",
+                ),
+              )
+              as dynamic;
+
+      expect(state.imagenesSeleccionadas.length, 1);
+    });
+    testWidgets('Debe mostrar el texto del Distrito si el VM tiene el dato', (
+      tester,
+    ) async {
+      // 1. Preparamos un Avistamiento con datos precargados
+      final avistamientoConDatos = Avistamiento();
+      avistamientoConDatos.distrito =
+          'Miraflores'; // 👈 Dato clave para entrar al IF
+
+      // 2. Forzamos al Mock a devolver este objeto en lugar del vacío
+      when(mockVM.avistamiento).thenReturn(avistamientoConDatos);
+
+      // 3. Cargamos la pantalla
+      await cargarPantalla(tester);
+
+      // 4. Verificamos que el IF se ejecutó y pintó el texto
+      // Esto hará que las líneas 248-258 se pongan verdes
+      expect(find.text('Distrito: Miraflores'), findsOneWidget);
     });
   });
 }
