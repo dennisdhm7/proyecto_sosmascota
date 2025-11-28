@@ -8,7 +8,19 @@ import 'package:share_plus/share_plus.dart';
 import 'replies_page.dart';
 
 class PantallaComentarios extends StatefulWidget {
-  const PantallaComentarios({super.key});
+  final FirebaseFirestore? firestore;
+  final FirebaseAuth? auth;
+  final FirebaseStorage? storage;
+  final Widget Function(String parentCommentId, String? parentAuthor)?
+  repliesBuilder;
+
+  const PantallaComentarios({
+    super.key,
+    this.firestore,
+    this.auth,
+    this.storage,
+    this.repliesBuilder,
+  });
 
   @override
   State<PantallaComentarios> createState() => _PantallaComentariosState();
@@ -16,8 +28,9 @@ class PantallaComentarios extends StatefulWidget {
 
 class _PantallaComentariosState extends State<PantallaComentarios> {
   final TextEditingController _ctrl = TextEditingController();
-  final CollectionReference _comentariosRef = FirebaseFirestore.instance
-      .collection('comentarios');
+  late final CollectionReference _comentariosRef;
+  FirebaseFirestore get _fs => widget.firestore ?? FirebaseFirestore.instance;
+  FirebaseAuth get _auth => widget.auth ?? FirebaseAuth.instance;
   final ImagePicker _picker = ImagePicker();
   final ScrollController _scrollController = ScrollController();
 
@@ -34,15 +47,13 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
   void initState() {
     super.initState();
     _cargarGuardados();
+    _comentariosRef = _fs.collection('comentarios');
   }
 
   Future<void> _cargarGuardados() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
     if (user == null) return;
-    final doc = await FirebaseFirestore.instance
-        .collection('usuarios')
-        .doc(user.uid)
-        .get();
+    final doc = await _fs.collection('usuarios').doc(user.uid).get();
     if (doc.exists && doc.data()!['guardados'] != null) {
       setState(() {
         _guardados = Set<String>.from(doc.data()!['guardados']);
@@ -51,9 +62,9 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
   }
 
   Future<void> _guardarPersistente() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
     if (user == null) return;
-    await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).set({
+    await _fs.collection('usuarios').doc(user.uid).set({
       'guardados': _guardados.toList(),
     }, SetOptions(merge: true));
   }
@@ -83,9 +94,10 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
   }
 
   Future<Map<String, String>> _uploadMedia(XFile file) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+    final uid = _auth.currentUser?.uid ?? 'anon';
     final ext = file.path.split('.').last;
-    final ref = FirebaseStorage.instance
+    final storage = widget.storage ?? FirebaseStorage.instance;
+    final ref = storage
         .ref()
         .child('comentarios')
         .child('$uid-${DateTime.now().millisecondsSinceEpoch}.$ext');
@@ -109,7 +121,8 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
       // eliminar imagen asociada si hay
       if (mediaUrl != null && mediaUrl.isNotEmpty) {
         try {
-          final ref = FirebaseStorage.instance.refFromURL(mediaUrl);
+          final storage = widget.storage ?? FirebaseStorage.instance;
+          final ref = storage.refFromURL(mediaUrl);
           await ref.delete();
         } catch (_) {}
       }
@@ -134,13 +147,10 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
     if (texto.isEmpty && _media == null) return;
     setState(() => _enviando = true);
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final user = _auth.currentUser;
       if (user == null) return;
 
-      final docUsuario = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .doc(user.uid)
-          .get();
+      final docUsuario = await _fs.collection('usuarios').doc(user.uid).get();
       String autor = 'Anónimo';
       if (docUsuario.exists) {
         final data = docUsuario.data()!;
@@ -189,11 +199,12 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
   }
 
   Future<void> _toggleReaction(String docId, bool isLike) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
     if (user == null) return;
     final uid = user.uid;
     final docRef = _comentariosRef.doc(docId);
-    await FirebaseFirestore.instance.runTransaction((tx) async {
+    final fs = widget.firestore ?? FirebaseFirestore.instance;
+    await fs.runTransaction((tx) async {
       final snap = await tx.get(docRef);
       if (!snap.exists) return;
       final data = snap.data() as Map<String, dynamic>;
@@ -239,7 +250,7 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
   }
 
   List<QueryDocumentSnapshot> _aplicarFiltro(List<QueryDocumentSnapshot> docs) {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
     if (user == null) return docs;
     return docs.where((d) {
       final data = d.data() as Map<String, dynamic>;
@@ -282,7 +293,7 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
 
     return Scaffold(
       appBar: AppBar(
@@ -386,10 +397,15 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
                       onComment: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => RepliesPage(
-                            parentCommentId: d.id,
-                            parentAuthor: data['autor'],
-                          ),
+                          builder: (_) =>
+                              widget.repliesBuilder?.call(
+                                d.id,
+                                data['autor'],
+                              ) ??
+                              RepliesPage(
+                                parentCommentId: d.id,
+                                parentAuthor: data['autor'],
+                              ),
                         ),
                       ),
                       onShare: () async {
@@ -412,6 +428,8 @@ class _PantallaComentariosState extends State<PantallaComentarios> {
                       esMio: esMio,
                       onEliminar: () =>
                           _eliminarComentario(d.id, data['mediaUrl']),
+                      currentUserId: _auth.currentUser?.uid,
+                      firestore: widget.firestore ?? FirebaseFirestore.instance,
                     );
                   },
                 );
@@ -495,6 +513,8 @@ class CommentTile extends StatelessWidget {
   final bool guardado;
   final bool esMio;
   final VoidCallback onEliminar;
+  final String? currentUserId;
+  final FirebaseFirestore? firestore;
 
   const CommentTile({
     super.key,
@@ -514,6 +534,8 @@ class CommentTile extends StatelessWidget {
     required this.guardado,
     required this.esMio,
     required this.onEliminar,
+    this.currentUserId,
+    this.firestore,
   });
 
   String _fechaBonita(DateTime? fecha) {
@@ -532,9 +554,7 @@ class CommentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasLiked =
-        FirebaseAuth.instance.currentUser != null &&
-        likes.contains(FirebaseAuth.instance.currentUser!.uid);
+    final hasLiked = currentUserId != null && likes.contains(currentUserId);
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -592,7 +612,7 @@ class CommentTile extends StatelessWidget {
             ],
             const SizedBox(height: 6),
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
+              stream: (firestore ?? FirebaseFirestore.instance)
                   .collection('comentarios')
                   .doc(docId)
                   .collection('respuestas')
