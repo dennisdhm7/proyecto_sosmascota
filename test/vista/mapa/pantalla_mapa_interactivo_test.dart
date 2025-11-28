@@ -10,6 +10,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:sos_mascotas/vista/mapa/pantalla_mapa_interactivo.dart';
+import 'package:sos_mascotas/vista/chat/pantalla_chat.dart';
 
 class _FakeHttpOverrides extends HttpOverrides {
   @override
@@ -136,7 +137,12 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: PantallaMapaInteractivo(auth: mockAuth, firestore: fakeFirestore),
+        home: ScaffoldMessenger(
+          child: PantallaMapaInteractivo(
+            auth: mockAuth,
+            firestore: fakeFirestore,
+          ),
+        ),
       ),
     );
   }
@@ -187,5 +193,55 @@ void main() {
     expect(find.textContaining('Avistamiento registrado'), findsOneWidget);
     expect(find.text('Calle Falsa 123'), findsWidgets); // <--- CAMBIO AQUÍ
     expect(find.text('Ver detalle'), findsOneWidget);
+  });
+  testWidgets('⛔ No debe permitir abrir chat consigo mismo', (tester) async {
+    await fakeFirestore.collection('reportes_mascotas').add({
+      'nombre': 'Toby',
+      'latitud': -18.01,
+      'longitud': -70.24,
+      'tipo': 'reporte',
+      'descripcion': 'Perro',
+      'usuarioId': mockUser.uid,
+      'fechaPerdida': '20/11/2025',
+    });
+
+    await cargarMapa(tester);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.location_on));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text("Contactar"));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    // ❌ No navega → PantallaChat NO debe aparecer
+    expect(find.byType(PantallaChat), findsNothing);
+  });
+  // 🟣 1) Sí debe permitir abrir chat cuando el usuario NO es el dueño
+  testWidgets('🟠 El botón Contactar aparece solo al seleccionar un marcador', (
+    tester,
+  ) async {
+    await fakeFirestore.collection('reportes_mascotas').add({
+      'nombre': 'Rex',
+      'latitud': -18.017,
+      'longitud': -70.247,
+      'tipo': 'reporte',
+      'usuarioId': 'user_999',
+      'descripcion': 'Perro grande',
+      'fechaPerdida': '21/11/2025',
+    });
+
+    await cargarMapa(tester);
+    await tester.pumpAndSettle();
+
+    // ❌ Al inicio NO debe existir botón contactar
+    expect(find.text('Contactar'), findsNothing);
+
+    // Seleccionar marcador
+    await tester.tap(find.byIcon(Icons.location_on));
+    await tester.pumpAndSettle();
+
+    // ✔ Ahora sí debe mostrarse
+    expect(find.text('Contactar'), findsOneWidget);
   });
 }

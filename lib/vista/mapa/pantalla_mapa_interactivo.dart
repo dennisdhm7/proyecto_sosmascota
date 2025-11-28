@@ -78,23 +78,26 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
   }
 
   Future<void> _abrirChat() async {
+    // 1. Si no hay punto seleccionado -> salir
     if (_seleccionado == null) return;
-    final safeContext = context;
 
+    // 2. Usuario actual
     final user = _auth.currentUser;
     if (user == null) return;
 
     final publicadorId = _seleccionado!["usuarioId"];
-    final reporteId = _seleccionado!["id"]; // Ahora sí tenemos el ID asegurado
+    final reporteId = _seleccionado!["id"];
 
+    // 3. No puedes chatear contigo mismo
     if (publicadorId == user.uid) {
-      if (!safeContext.mounted) return;
-      ScaffoldMessenger.of(safeContext).showSnackBar(
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No puedes chatear contigo mismo.")),
       );
       return;
     }
 
+    // 4. Verificar si ya existe un chat previo
     final chatExistente = await _fs
         .collection("chats")
         .where("publicadorId", isEqualTo: publicadorId)
@@ -104,9 +107,11 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
         .get();
 
     String chatId;
+
     if (chatExistente.docs.isNotEmpty) {
       chatId = chatExistente.docs.first.id;
     } else {
+      // 5. Crear nuevo chat si no existe
       final nuevoChat = await _fs.collection("chats").add({
         "reporteId": reporteId,
         "tipo": _tipoSeleccionado,
@@ -118,10 +123,12 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
       chatId = nuevoChat.id;
     }
 
-    if (!safeContext.mounted) return;
+    // 6. Verificar widget montado antes de navegar
+    if (!mounted) return;
 
+    // 7. Navegar a la pantalla del chat
     Navigator.push(
-      safeContext,
+      context,
       MaterialPageRoute(
         builder: (_) => PantallaChat(
           chatId: chatId,
@@ -129,7 +136,6 @@ class _PantallaMapaInteractivoState extends State<PantallaMapaInteractivo> {
           tipo: _tipoSeleccionado,
           publicadorId: publicadorId,
           usuarioId: user.uid,
-          // Pasamos las instancias para mantener la inyección
           firebaseAuth: _auth,
           firebaseFirestore: _fs,
         ),
