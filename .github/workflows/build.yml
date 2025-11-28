@@ -1,4 +1,4 @@
-name: Analisis SonarCloud y Tests
+name: Pipeline de Calidad y Seguridad (Sonar, Semgrep, Snyk)
 on:
   push:
     branches:
@@ -69,3 +69,51 @@ jobs:
             "-Dsonar.dart.lcov.reportPaths=coverage/lcov.info"
             "-Dsonar.coverage.reportPaths=coverage/lcov.info"
             "-Dsonar.exclusions=test/**/*,lib/**/*.g.dart,lib/firebase_options.dart"
+
+  # -----------------------------------------------------------------
+  # JOB 2: SEMGREP (Análisis Estático de Seguridad - SAST)
+  # Busca patrones de código inseguros (hardcoded secrets, malas prácticas)
+  # -----------------------------------------------------------------
+  security-semgrep:
+    name: Security - Semgrep
+    runs-on: ubuntu-latest
+    # No necesita Flutter instalado, solo el código fuente
+    container:
+      image: returntocorp/semgrep
+    if: (github.actor != 'dependabot[bot]') # Evitar correr en PRs automáticos
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Run Semgrep
+        run: semgrep scan --config=p/default --config=p/security-audit --config=p/secrets
+
+  # -----------------------------------------------------------------
+  # JOB 3: SNYK (Análisis de Dependencias - SCA)
+  # Busca vulnerabilidades en los paquetes de pubspec.yaml/lock
+  # -----------------------------------------------------------------
+  security-snyk:
+    name: Security - Snyk
+    runs-on: ubuntu-latest
+    needs: sonarcloud # Opcional: Si prefieres que corra paralelo, quita esta línea
+    steps:
+      - uses: actions/checkout@v3
+      
+      # Snyk necesita Flutter para entender el pubspec correctamente
+      - name: Set up Flutter for Snyk
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.35.2'
+          
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Snyk to check for vulnerabilities
+        # Usamos una acción genérica o el CLI. La acción oficial de node suele funcionar bien instalando snyk
+        uses: snyk/actions/setup@master
+      
+      - name: Snyk Test
+        run: snyk test --file=pubspec.yaml
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true # Cambia a false si quieres que el build falle si encuentra vulnerabilidades
