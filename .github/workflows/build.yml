@@ -120,3 +120,19 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
+
+  security-trivy:
+    name: Security - Trivy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'            # 'fs' = Filesystem (busca en tus archivos)
+          scan-ref: '.'              # Escanea la carpeta actual
+          format: 'table'            # Te muestra una tabla bonita en el log
+          exit-code: '0'             # 0 = No rompe el pipeline (aviso). Pon 1 para bloquear.
+          ignore-unfixed: true       # Ignora fallos que no tienen solución todavía
+          severity: 'CRITICAL,HIGH'  # Solo avisa de cosas graves
