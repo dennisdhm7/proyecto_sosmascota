@@ -1408,7 +1408,7 @@ class MockReporteServiciosExternos extends _i1.Mock
 /// A class which mocks [CollectionReferenceMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-// ignore: must_be_immutable
+
 class MockCollectionReferenceMap extends _i1.Mock
     implements _i13.CollectionReferenceMap {
   MockCollectionReferenceMap() {
@@ -1838,7 +1838,7 @@ class MockCollectionReferenceMap extends _i1.Mock
 /// A class which mocks [DocumentReferenceMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-// ignore: must_be_immutable
+
 class MockDocumentReferenceMap extends _i1.Mock
     implements _i13.DocumentReferenceMap {
   MockDocumentReferenceMap() {

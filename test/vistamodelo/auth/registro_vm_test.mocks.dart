@@ -1477,7 +1477,7 @@ class MockUser extends _i1.Mock implements _i4.User {
 /// A class which mocks [CollectionReferenceMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-// ignore: must_be_immutable
+
 class MockCollectionReferenceMap extends _i1.Mock
     implements _i14.CollectionReferenceMap {
   MockCollectionReferenceMap() {
@@ -1907,7 +1907,7 @@ class MockCollectionReferenceMap extends _i1.Mock
 /// A class which mocks [DocumentReferenceMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-// ignore: must_be_immutable
+
 class MockDocumentReferenceMap extends _i1.Mock
     implements _i14.DocumentReferenceMap {
   MockDocumentReferenceMap() {
@@ -2050,7 +2050,7 @@ class MockDocumentReferenceMap extends _i1.Mock
 /// A class which mocks [QueryMap].
 ///
 /// See the documentation for Mockito's code generation for more information.
-// ignore: must_be_immutable
+
 class MockQueryMap extends _i1.Mock implements _i14.QueryMap {
   MockQueryMap() {
     _i1.throwOnMissingStub(this);
