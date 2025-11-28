@@ -11,8 +11,26 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:sos_mascotas/vista/reportes/pantalla_reporte_mascota.dart';
 import 'package:sos_mascotas/vista/reportes/video_recorte_page.dart';
 import 'package:sos_mascotas/vistamodelo/reportes/reporte_vm.dart';
+import 'package:flutter/services.dart'; // Para MethodChannel
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart'; // Para mockear el picker
 
 import 'pantalla_reporte_mascota_test.mocks.dart';
+
+class FakeVideoPickerPlatform extends ImagePickerPlatform {
+  String? videoPathToReturn;
+
+  @override
+  Future<PickedFile?> pickVideo({
+    required ImageSource source,
+    CameraDevice preferredCameraDevice = CameraDevice.rear,
+    Duration? maxDuration,
+  }) async {
+    if (videoPathToReturn != null) {
+      return PickedFile(videoPathToReturn!);
+    }
+    return null;
+  }
+}
 
 typedef CollectionReferenceMap = CollectionReference<Map<String, dynamic>>;
 typedef DocumentReferenceMap = DocumentReference<Map<String, dynamic>>;
@@ -71,7 +89,6 @@ void main() {
       ),
     );
   }
-
   // ---------------------------------------------------------------------------
   // PASO 1
   // ---------------------------------------------------------------------------
