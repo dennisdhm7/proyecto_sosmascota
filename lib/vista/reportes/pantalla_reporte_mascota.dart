@@ -536,24 +536,37 @@ class Paso2Ubicacion extends StatelessWidget {
                       "Fecha de pérdida",
                     ).copyWith(suffixIcon: const Icon(Icons.calendar_today)),
                     onTap: () async {
+                      // 1. Capturamos el VM antes de la pausa (esto es seguro)
                       final vm = context.read<ReporteMascotaVM>();
-                      final safeContext = context;
+
+                      // Lógica para pruebas o producción
                       final fechaFn =
                           Zone.current[#showDatePicker] as DatePickerFn?;
-                      final fecha = fechaFn != null
-                          ? await fechaFn()
-                          : await showDatePicker(
-                              context: safeContext,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime.now(),
-                            );
-                      if (!safeContext.mounted) return;
+
+                      // 2. Ejecutamos la tarea asíncrona (el await)
+                      final DateTime? fecha;
+                      if (fechaFn != null) {
+                        fecha = await fechaFn();
+                      } else {
+                        // Es seguro pasar 'context' aquí porque el await apenas está comenzando
+                        fecha = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                        );
+                      }
+
+                      // 3. 🛑 EL GUARDIA: Verificamos si el widget sigue "montado" en la pantalla
+                      if (!context.mounted) return;
+
+                      // 4. Si llegamos aquí, es seguro actualizar la UI
                       if (fecha != null) {
-                        // Guardar en el modelo y mostrar en el campo
-                        vm.reporte.fechaPerdida =
+                        final fechaFormat =
                             "${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}";
-                        fechaCtrl.text = vm.reporte.fechaPerdida;
+
+                        vm.reporte.fechaPerdida = fechaFormat;
+                        fechaCtrl.text = fechaFormat;
                       }
                     },
                     validator: (v) =>
@@ -567,19 +580,35 @@ class Paso2Ubicacion extends StatelessWidget {
                       "Hora aproximada",
                     ).copyWith(suffixIcon: const Icon(Icons.access_time)),
                     onTap: () async {
+                      // 1. Capturamos el VM antes de la pausa (recomendado)
+                      final vm = context.read<ReporteMascotaVM>();
+
                       final horaFn =
                           Zone.current[#showTimePicker] as TimePickerFn?;
 
-                      final hora = horaFn != null
-                          ? await horaFn()
-                          : await showTimePicker(
-                              context: context,
-                              initialTime: TimeOfDay.now(),
-                            );
+                      // 2. Lógica del selector separada para mayor claridad
+                      final TimeOfDay? hora;
+                      if (horaFn != null) {
+                        hora = await horaFn();
+                      } else {
+                        hora = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                      }
+
+                      // 3. 🛑 EL GUARDIA DE SEGURIDAD:
+                      // Si la pantalla ya no existe, detenemos la ejecución aquí.
+                      if (!context.mounted) return;
+
+                      // 4. Actualización segura
                       if (hora != null) {
-                        vm.reporte.horaPerdida =
+                        // Formatear HH:mm
+                        final horaFormat =
                             "${hora.hour.toString().padLeft(2, '0')}:${hora.minute.toString().padLeft(2, '0')}";
-                        horaCtrl.text = vm.reporte.horaPerdida;
+
+                        vm.reporte.horaPerdida = horaFormat;
+                        horaCtrl.text = horaFormat;
                       }
                     },
                     validator: (v) =>
@@ -623,31 +652,44 @@ class Paso2Ubicacion extends StatelessWidget {
                     onPressed: () async {
                       final vm = context.read<ReporteMascotaVM>();
 
-                      // 🌎 ¿Estamos en un test?
+                      // 🌎 1. Definir la fuente de datos (Test o Real)
                       final customFn = WizardOverrides.mapaOverride;
 
-                      final resultado = customFn != null
-                          ? await customFn() // ← simulación en test
-                          : await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const PantallaMapaOSM(),
-                              ),
-                            );
+                      final Map<String, dynamic>? resultado;
 
-                      if (resultado != null && context.mounted) {
+                      // 2. Ejecutar la lógica (separada por claridad)
+                      if (customFn != null) {
+                        resultado = await customFn(); // Modo Test
+                      } else {
+                        // Modo Real: Navegamos
+                        resultado = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PantallaMapaOSM(),
+                          ),
+                        );
+                      }
+
+                      // 🛑 3. EL GUARDIA: Verificar si la pantalla sigue viva
+                      if (!context.mounted) return;
+
+                      // 4. Actualizar datos solo si hay resultado
+                      if (resultado != null) {
                         vm.reporte.direccion =
                             (resultado['direccion'] ?? '') as String;
                         vm.reporte.distrito =
                             (resultado['distrito'] ?? '') as String;
 
+                        // Manejo seguro de tipos numéricos (double/int)
                         vm.reporte.latitud = resultado['lat'] is num
                             ? (resultado['lat'] as num).toDouble()
                             : null;
+
                         vm.reporte.longitud = resultado['lng'] is num
                             ? (resultado['lng'] as num).toDouble()
                             : null;
 
+                        // Actualizar el controlador de texto visual
                         direccionCtrl.text = vm.reporte.direccion;
                       }
                     },
@@ -702,24 +744,34 @@ class Paso2Ubicacion extends StatelessWidget {
                       ),
                       onPressed: () async {
                         final vm = context.read<ReporteMascotaVM>();
-                        final safeContext = context;
 
+                        // 1. Lógica de Test vs Real (Separada para evitar errores de linter)
                         final mapaFn = WizardOverrides.mapaOverride;
+                        final Map<String, dynamic>?
+                        resultado; // Declaramos la variable
 
-                        final resultado = mapaFn != null
-                            ? await mapaFn()
-                            : await Navigator.push(
-                                safeContext,
-                                MaterialPageRoute(
-                                  builder: (_) => const PantallaMapaOSM(),
-                                ),
-                              );
+                        if (mapaFn != null) {
+                          resultado = await mapaFn();
+                        } else {
+                          // Usamos 'context' directamente. Es seguro pasarlo al Navigator
+                          // porque el 'await' ocurre DESPUÉS de que el Navigator usó el contexto.
+                          resultado = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PantallaMapaOSM(),
+                            ),
+                          );
+                        }
 
-                        if (!safeContext.mounted) return;
+                        // 2. 🛑 EL GUARDIA: Usamos la propiedad nativa 'mounted'
+                        if (!context.mounted) return;
 
+                        // 3. Asignación de datos
                         if (resultado != null) {
-                          vm.reporte.direccion = resultado['direccion'] ?? '';
-                          vm.reporte.distrito = resultado['distrito'] ?? '';
+                          vm.reporte.direccion =
+                              (resultado['direccion'] ?? '') as String;
+                          vm.reporte.distrito =
+                              (resultado['distrito'] ?? '') as String;
 
                           vm.reporte.latitud = resultado['lat'] is num
                               ? (resultado['lat'] as num).toDouble()

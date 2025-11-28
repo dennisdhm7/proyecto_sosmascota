@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -57,19 +58,25 @@ void main() {
     test('detectarAnimal ejecuta línea', () async {
       try {
         await services.detectarAnimal(File('/tmp/t.jpg'));
-      } catch (e) {}
+      } catch (e) {
+        debugPrint('Error ignorado en test: $e');
+      }
     });
 
     test('compararImagenes ejecuta línea', () async {
       try {
         await services.compararImagenes(File('/t1.jpg'), File('/t2.jpg'));
-      } catch (e) {}
+      } catch (e) {
+        debugPrint('Error ignorado en test: $e');
+      }
     });
 
     test('enviarPush ejecuta línea', () async {
       try {
         await services.enviarPush(titulo: 'T', cuerpo: 'C');
-      } catch (e) {}
+      } catch (e) {
+        debugPrint('Error ignorado en test: $e');
+      }
     });
   });
 }

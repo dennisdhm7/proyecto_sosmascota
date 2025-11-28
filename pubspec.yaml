@@ -59,6 +59,8 @@ dev_dependencies:
   firebase_core_platform_interface: ^6.0.2
   flutter_image_compress_platform_interface: ^1.0.5
   plugin_platform_interface: ^2.1.8
+  image_picker_platform_interface: ^2.11.1
+  video_player_platform_interface: ^6.6.0
 flutter_icons:
   android: true
   ios: true

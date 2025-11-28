@@ -41,7 +41,7 @@ void main() {
         titulo: anyNamed('titulo'),
         cuerpo: anyNamed('cuerpo'),
       ),
-    ).thenAnswer((_) async => null);
+    ).thenAnswer((_) async {});
 
     // 2. Inicializar VM con dependencias
     vm = AvistamientoVM(

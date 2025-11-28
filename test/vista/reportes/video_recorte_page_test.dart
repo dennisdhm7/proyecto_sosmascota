@@ -44,7 +44,7 @@ class FakeVideoPlayerPlatform extends VideoPlayerPlatform {
   Future<int?> create(DataSource dataSource) async => 1;
 
   @override
-  Future<void> initialize(int textureId) async {}
+  Future<void> init() async {} // ✅ Correcto
 
   @override
   Future<void> play(int textureId) async {}

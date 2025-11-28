@@ -17,10 +17,11 @@ class PantallaMisReportes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _auth = auth ?? FirebaseAuth.instance;
-    final _firestore = firestore ?? FirebaseFirestore.instance;
+    // ✅ CORREGIDO: Nombres sin guion bajo y descriptivos
+    final authInstance = auth ?? FirebaseAuth.instance;
+    final firestoreInstance = firestore ?? FirebaseFirestore.instance;
 
-    final uid = _auth.currentUser?.uid;
+    final uid = authInstance.currentUser?.uid;
 
     if (uid == null) {
       return const Scaffold(
@@ -28,12 +29,13 @@ class PantallaMisReportes extends StatelessWidget {
       );
     }
 
-    final reportesRef = _firestore
+    // Usa las nuevas variables aquí abajo 👇
+    final reportesRef = firestoreInstance
         .collection("reportes_mascotas")
         .where("usuarioId", isEqualTo: uid)
         .orderBy("fechaRegistro", descending: true);
 
-    final avistamientosRef = _firestore
+    final avistamientosRef = firestoreInstance
         .collection("avistamientos")
         .where("usuarioId", isEqualTo: uid)
         .orderBy("fechaRegistro", descending: true);
