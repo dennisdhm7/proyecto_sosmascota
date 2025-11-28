@@ -68,7 +68,8 @@ class PerfilVM extends ChangeNotifier {
     final picked = await imagePicker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final uid = auth.currentUser!.uid;
+
     final ref = storage.ref().child("usuarios/$uid/perfil.jpg");
 
     await ref.putFile(File(picked.path));
