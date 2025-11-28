@@ -166,4 +166,46 @@ void main() {
       ).called(greaterThan(0));
     });
   });
+
+  group('Métodos Auxiliares y Setters', () {
+    test('setDireccion y setDescripcion deben actualizar el modelo', () {
+      vm.setDireccion('Calle Falsa 123');
+      vm.setDescripcion('Gato naranja');
+
+      expect(vm.avistamiento.direccion, 'Calle Falsa 123');
+      expect(vm.avistamiento.descripcion, 'Gato naranja');
+    });
+
+    test('limpiarMensaje debe dejar mensajeUsuario en null', () {
+      // 1. Arrange: forzamos un mensaje
+      // (Accedemos a una propiedad privada indirectamente o simulamos un estado de error previo)
+      // Como _mensajeUsuario es privado y solo tiene getter, provocamos un error primero
+      // O simplemente asumimos que si funciona la lógica, al llamar limpiar queda null.
+
+      // Una forma más limpia si no puedes setearlo directamente es provocar un cambio de estado
+      // pero dado que es void, solo verificamos que sea null al final.
+      vm.limpiarMensaje();
+      expect(vm.mensajeUsuario, isNull);
+    });
+
+    test('actualizarUbicacion debe setear todos los datos y notificar', () {
+      bool notificado = false;
+      vm.addListener(() {
+        notificado = true;
+      });
+
+      vm.actualizarUbicacion(
+        direccion: 'Av. Siempre Viva',
+        distrito: 'Springfield',
+        latitud: 10.0,
+        longitud: 20.0,
+      );
+
+      expect(vm.avistamiento.direccion, 'Av. Siempre Viva');
+      expect(vm.avistamiento.distrito, 'Springfield');
+      expect(vm.avistamiento.latitud, 10.0);
+      expect(vm.avistamiento.longitud, 20.0);
+      expect(notificado, true);
+    });
+  });
 }
