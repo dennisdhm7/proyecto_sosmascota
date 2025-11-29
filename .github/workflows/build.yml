@@ -126,7 +126,8 @@ jobs:
 
 
 # -----------------------------------------------------------------
-  # JOB 4: DOCUMENTACIÓN - BUILD (Genera el artefacto)
+  # JOB 4: DOCUMENTACIÓN - BUILD Y PORTAL UNIFICADO
+  # Genera el HTML de Dartdoc y crea la página de portal (Landing Page)
   # -----------------------------------------------------------------
   build-docs:
     name: Build Documentation Artifact
@@ -145,15 +146,71 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # 1. Generar la documentación HTML
-      - name: Generate API Docs
+      # 1. Generar la documentación HTML con dart doc
+      - name: Generate Dart API Docs
         run: dart doc .
 
-      # 2. Subir la carpeta 'doc/api' como artefacto de despliegue
+      # 2. Crear el directorio final y mover los docs de Dart
+      - name: Create Unified Portal Structure
+        run: |
+          # 2.1 Crear el directorio final que se subirá
+          mkdir _site
+          # 2.2 Mover los docs generados a un subdirectorio fijo
+          mv doc/api _site/dartdoc
+          
+          # 2.3 ELIMINAR el enlace simbólico para evitar errores de despliegue
+          rm -rf doc
+          
+          # 🛑 Reemplaza [TU_URL_DEEPWIKI_AQUÍ] con el enlace real de tu documentación
+          DEEPWIKI_URL="[TU_URL_DEEPWIKI_AQUÍ]" 
+
+          # 3. Crear el index.html principal (la página de portal)
+          echo '<html>
+          <head>
+              <title>Portal de Documentación SOS Mascotas</title>
+              <style>
+                  body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f4f4f9; }
+                  .container { text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+                  h1 { color: #008080; margin-bottom: 30px; }
+                  .option { margin: 15px 0; }
+                  .option a {
+                      text-decoration: none;
+                      color: white;
+                      background-color: #008080;
+                      padding: 15px 30px;
+                      border-radius: 8px;
+                      display: inline-block;
+                      font-size: 18px;
+                      transition: background-color 0.3s;
+                  }
+                  .option a:hover { background-color: #005f5f; }
+                  p { color: #666; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🐾 Portal de Documentación SOS Mascotas 🐾</h1>
+                  
+                  <div class="option">
+                      <h2>Documentación Técnica del Código (Dartdoc)</h2>
+                      <p>Estructura de clases, métodos y API interna.</p>
+                      <a href="/dartdoc/">Ver Dartdoc</a>
+                  </div>
+                  
+                  <div class="option">
+                      <h2>Documentación de Procesos (DeepWiki)</h2>
+                      <p>Manuales de usuario, flujos de negocio y decisiones de arquitectura.</p>
+                      <a href="'"$DEEPWIKI_URL"'" target="_blank">Ver DeepWiki Externo</a>
+                  </div>
+              </div>
+          </body>
+          </html>' > _site/index.html
+        
+      # 4. Subir la carpeta '_site' como artefacto de despliegue
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'doc/api' # Carpeta que generó dartdoc
+          path: '_site' # Carpeta unificada
 
   # -----------------------------------------------------------------
   # JOB 5: DOCUMENTACIÓN - DEPLOY (Publica el artefacto)
