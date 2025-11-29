@@ -79,15 +79,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Run Semgrep and generate SARIF
-        # 🛑 Generamos SARIF
-        run: semgrep scan --sarif --output semgrep-report.sarif --config=p/default --config=p/security-audit --config=p/secrets
+      - name: Run Semgrep (HTML)
+        run: semgrep scan --config=p/default --config=p/security-audit --config=p/secrets --output semgrep-report.html --format html
 
       - name: Upload Semgrep Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: semgrep-sarif
-          path: semgrep-report.sarif
+          name: semgrep-html
+          path: semgrep-report.html
 
   # -----------------------------------------------------------------
   # JOB 3: TRIVY (Genera SARIF y Sube Artefacto)
@@ -120,16 +119,21 @@ jobs:
           # 2. Instalar Trivy
           sudo apt-get update
           sudo apt-get install trivy -y
-          
+      
+      - name: Download Trivy HTML template
+        run: |
+          mkdir -p contrib
+          wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl -O contrib/html.tpl
+
       # 🛑 EJECUCIÓN: Ahora que Trivy está en el PATH, podemos ejecutarlo.
-      - name: Run Trivy vulnerability scanner (SARIF)
-        run: trivy fs . --format sarif --output trivy-report.sarif --severity CRITICAL,HIGH --ignore-unfixed
+      - name: Run Trivy (HTML)
+        run: trivy fs . --format template --template "contrib/html.tpl" --output trivy-report.html --severity CRITICAL,HIGH --ignore-unfixed
 
       - name: Upload Trivy Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-sarif
-          path: trivy-report.sarif
+          name: trivy-html
+          path: trivy-report.html
 
   # -----------------------------------------------------------------
   # JOB 4: GENERATE-REPORT (ReportGenerator - Complejidad)
@@ -206,8 +210,8 @@ jobs:
           mv artifacts/risk-coverage-report/* _site/reports/risk_report/
           
           # Mover Semgrep y Trivy SARIF (Archivos individuales)
-          mv artifacts/semgrep-sarif/semgrep-report.sarif _site/reports/semgrep.sarif
-          mv artifacts/trivy-sarif/trivy-report.sarif _site/reports/trivy.sarif
+          mv artifacts/semgrep-html/semgrep-report.html _site/reports/semgrep.html
+          mv artifacts/trivy-html/trivy-report.html _site/reports/trivy.html
           
           # Limpiar archivos temporales
           rm -rf artifacts doc
@@ -267,9 +271,9 @@ jobs:
                       <h2>Reportes de Seguridad Estática</h2>
                       <p style="margin-bottom: 10px;">Archivos SARIF con hallazgos de seguridad (para visualizar con extensión de navegador):</p>
 
-                      <a href="reports/trivy.sarif" target="_blank" style="background-color: #0070A0;">Ver Reporte Trivy (SCA)</a> 
+                      <a href="reports/trivy.html" target="_blank" style="background-color: #0070A0;">Ver Reporte Trivy</a> 
                       
-                      <a href="reports/semgrep.sarif" target="_blank" style="background-color: #CC4400;">Ver Reporte Semgrep (SAST)</a>
+                      <a href="reports/semgrep.html" target="_blank" style="background-color: #CC4400;">Ver Reporte Semgrep</a>
                       
                       <hr style="margin: 15px 0; border-color: #eee;">
                       
