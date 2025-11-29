@@ -184,7 +184,8 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-        
+      - name: Generate Dart API Docs
+        run: dart doc .
       # 1. Descargar Todos los Reportes Necesarios (SARIFs y HTMLs)
       - name: Download Artifacts (Reports)
         uses: actions/download-artifact@v4
