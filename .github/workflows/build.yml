@@ -97,6 +97,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # 1. Instalación de Flutter y pub get (se mantienen)
       - name: Set up Flutter for Trivy
         uses: subosito/flutter-action@v2
         with:
@@ -106,6 +107,12 @@ jobs:
       - name: Generate lockfile
         run: flutter pub get
 
+      # 🛑 CORRECCIÓN CLAVE: Instalar el binario Trivy en el PATH
+      # Usamos la acción oficial de instalación.
+      - name: Install Trivy CLI
+        uses: aquasecurity/setup-trivy@v1 
+
+      # 🛑 EJECUCIÓN: Ahora que Trivy está en el PATH, podemos ejecutarlo.
       - name: Run Trivy vulnerability scanner (SARIF)
         run: trivy fs . --format sarif --output trivy-report.sarif --severity CRITICAL,HIGH --ignore-unfixed
 
@@ -114,7 +121,6 @@ jobs:
         with:
           name: trivy-sarif
           path: trivy-report.sarif
-
 
   # -----------------------------------------------------------------
   # JOB 4: GENERATE-REPORT (ReportGenerator - Complejidad)
