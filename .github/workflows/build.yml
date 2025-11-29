@@ -195,22 +195,23 @@ jobs:
       # 3. Crear el directorio final y mover los docs y reportes SARIF
       - name: Create Unified Portal Structure
         run: |
-          # 3.1 SETUP Y MOVER ARCHIVOS
+          # 1. SETUP INICIAL
           mkdir _site
           mkdir -p _site/reports
           mv doc/api _site/dartdoc
           
-          # Mover ReportGenerator (HTML de Riesgo)
-          mv artifacts/risk-coverage-report/coverage_risk_html _site/reports/risk_report
-
-          # 🛑 Mover Semgrep y Trivy SARIF (Archivos individuales)
+          # 🛑 CORRECCIÓN CLAVE: Mover el contenido del artefacto descargado directamente.
+          # Se asume que risk-coverage-report contiene index.htm.
+          mv artifacts/risk-coverage-report/* _site/reports/risk_report/
+          
+          # Mover Semgrep y Trivy SARIF (Archivos individuales)
           mv artifacts/semgrep-sarif/semgrep-report.sarif _site/reports/semgrep.sarif
           mv artifacts/trivy-sarif/trivy-report.sarif _site/reports/trivy.sarif
           
           # Limpiar archivos temporales
           rm -rf artifacts doc
 
-          # 3.3 VARIABLES Y GENERACIÓN DE INDEX.HTML
+          # 3.3 VARIABLES Y GENERACIÓN DE INDEX.HTML (No Modificado)
           DEEPWIKI_URL="https://deepwiki.com/dennisdhm7/proyecto_sosmascota"
           SONAR_URL="https://sonarcloud.io/dashboard?id=dennisdhm7_proyecto_sosmascota"
           
