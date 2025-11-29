@@ -132,8 +132,8 @@ jobs:
   build-docs:
     name: Build Documentation Artifact
     runs-on: ubuntu-latest
-    needs: [sonarcloud, security-trivy] # Solo si los checks pasan
-    if: github.ref == 'refs/heads/main' # Solo si estamos en la rama principal
+    needs: [sonarcloud, security-trivy] # Dependencia de los checks
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
 
@@ -146,25 +146,22 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # 1. Generar la documentación HTML con dart doc
-      - name: Generate Dart API Docs
+      - name: Generate API Docs
         run: dart doc .
 
       # 2. Crear el directorio final y mover los docs de Dart
       - name: Create Unified Portal Structure
+        env:
+          # Usaremos la URL de DeepWiki directamente en el script
+          DEEPWIKI_URL: https://deepwiki.com/dennisdhm7/proyecto_sosmascota
         run: |
-          # 2.1 Crear el directorio final que se subirá
           mkdir _site
-          # 2.2 Mover los docs generados a un subdirectorio fijo
           mv doc/api _site/dartdoc
-          
-          # 2.3 ELIMINAR el enlace simbólico para evitar errores de despliegue
           rm -rf doc
           
-          # 🛑 Reemplaza [TU_URL_DEEPWIKI_AQUÍ] con el enlace real de tu documentación
-          DEEPWIKI_URL="[TU_URL_DEEPWIKI_AQUÍ]" 
+          # Creación del HTML con sustitución de variables (usando la variable de shell)
+          DEEPWIKI_URL_FINAL=$DEEPWIKI_URL
 
-          # 3. Crear el index.html principal (la página de portal)
           echo '<html>
           <head>
               <title>Portal de Documentación SOS Mascotas</title>
@@ -200,17 +197,17 @@ jobs:
                   <div class="option">
                       <h2>Documentación de Procesos (DeepWiki)</h2>
                       <p>Manuales de usuario, flujos de negocio y decisiones de arquitectura.</p>
-                      <a href="'"$DEEPWIKI_URL"'" target="_blank">Ver DeepWiki Externo</a>
+                      <a href="'"$DEEPWIKI_URL_FINAL"'" target="_blank">Ver DeepWiki Externo</a>
                   </div>
               </div>
           </body>
           </html>' > _site/index.html
-        
-      # 4. Subir la carpeta '_site' como artefacto de despliegue
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '_site' # Carpeta unificada
+                  
+                # 4. Subir la carpeta '_site' como artefacto de despliegue
+                - name: Upload Pages Artifact
+                  uses: actions/upload-pages-artifact@v3
+                  with:
+                    path: '_site' 
 
   # -----------------------------------------------------------------
   # JOB 5: DOCUMENTACIÓN - DEPLOY (Publica el artefacto)
@@ -218,11 +215,14 @@ jobs:
   deploy-pages:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    needs: build-docs # Espera a que la documentación haya sido construida
+    # 🛑 Cambiamos la dependencia de build-docs a build-docs (el job que crea el artefacto)
+    needs: build-docs 
     environment:
-      name: github-pages # Necesario para que la acción funcione
+      # 🛑 ESTE ES EL ENTORNO OFICIAL DE GITHUB PAGES (NO CAMBIAR)
+      name: github-pages 
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy
         id: deployment
+        # 🛑 USAMOS LA ACCIÓN OFICIAL DE DESPLIEGUE
         uses: actions/deploy-pages@v4
