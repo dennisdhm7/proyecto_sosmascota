@@ -170,49 +170,26 @@ jobs:
   build-docs:
     name: Build Documentation Artifact
     runs-on: ubuntu-latest
-    # 🛑 CAMBIO: Aseguramos que dependa del reporte generado (Job 4)
-    needs: [sonarcloud, security-trivy, generate-report] 
+    needs: [sonarcloud, security-trivy, generate-report] # Depende de todos los reportes
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          flutter-version: '3.35.2'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      # 1. Generar la documentación HTML con dart doc
-      - name: Generate Dart API Docs
-        run: dart doc .
-
-      # 2. Descargar el Reporte de Riesgo HTML
       - name: Download Risk Report Artifact
         uses: actions/download-artifact@v4
         with:
           name: risk-coverage-report
-          path: risk-coverage-report-folder
-
-      # 3. Crear el directorio final y mover los docs
+          path: risk-coverage-report 
+        
       - name: Create Unified Portal Structure
         run: |
-          # 1. Crear directorios
+          # 1. Crear directorios y mover el reporte de riesgo
           mkdir _site
-          mkdir _site/risk_report # Aseguramos el destino
-
-          # 2. Mover el CONTENIDO del artefacto descargado a su destino final
-          # Nota: 'risk-coverage-report' es el nombre de la carpeta creada por la descarga.
+          mkdir -p _site/risk_report 
           mv risk-coverage-report/* _site/risk_report/
+          rm -rf risk-coverage-report # Limpiar carpeta descargada
           
-          # 3. Limpiar y mover Dartdoc
-          mv doc/api _site/dartdoc
-          rm -rf doc
-          
-          # 🛑 Reemplaza [TU_URL_DEEPWIKI_AQUÍ] con el enlace real de tu documentación
-          DEEPWIKI_URL="https://deepwiki.com/dennisdhm7/proyecto_sosmascota" 
+          DEEPWIKI_URL="https://deepwiki.com/dennisdhm7/proyecto_sosmascota"
 
           # 4. Crear el index.html principal (igual que antes)
           echo '<html>
