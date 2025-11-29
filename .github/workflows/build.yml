@@ -198,6 +198,7 @@ jobs:
           # 1. SETUP INICIAL
           mkdir _site
           mkdir -p _site/reports
+          mkdir -p _site/reports/risk_report
           mv doc/api _site/dartdoc
           
           # 🛑 CORRECCIÓN CLAVE: Mover el contenido del artefacto descargado directamente.
