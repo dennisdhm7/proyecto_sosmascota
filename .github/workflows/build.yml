@@ -121,18 +121,34 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
 
+# -----------------------------------------------------------------
+  # JOB 3: TRIVY (Reemplazo de Snyk para SCA - Análisis de Dependencias)
+  # -----------------------------------------------------------------
   security-trivy:
-    name: Security - Trivy
+    name: Security - Trivy (Dependencias)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
+      # 1. Instalamos Flutter (Necesario para generar el lockfile)
+      - name: Set up Flutter for Trivy
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.35.2'
+
+      # 2. Generamos el pubspec.lock FRESCO
+      # Esto asegura que el archivo exista físicamente para que Trivy lo lea
+      - name: Generate lockfile
+        run: flutter pub get
+
+      # 3. Ahora sí, Trivy encontrará el archivo
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'fs'            # 'fs' = Filesystem (busca en tus archivos)
-          scan-ref: '.'              # Escanea la carpeta actual
-          format: 'table'            # Te muestra una tabla bonita en el log
-          exit-code: '0'             # 0 = No rompe el pipeline (aviso). Pon 1 para bloquear.
-          ignore-unfixed: true       # Ignora fallos que no tienen solución todavía
-          severity: 'CRITICAL,HIGH'  # Solo avisa de cosas graves
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
