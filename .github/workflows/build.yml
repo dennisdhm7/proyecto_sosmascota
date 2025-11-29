@@ -146,20 +146,23 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Cleanup previous doc folder
+        run: rm -rf doc _site
+
       # 🛑 1. ARREGLO FINAL: Sobrescribir dartdoc_options.yaml para garantizar encoding
       - name: Ensure dartdoc_options.yaml is clean
         run: |
-          cat << EOF > dartdoc_options.yaml
-          dartdoc:
-            custom_package_title: "SOS Mascotas - API de Lógica y Servicios"
-            exclude:
-              - lib/vista/**/*
-              - lib/main.dart
-              - lib/firebase_options.dart
-              - lib/**/*.g.dart
-              - lib/**/*.freezed.dart
-              - lib/**/*.mocks.dart
-          EOF
+          cat << 'EOF' > dartdoc_options.yaml
+        dartdoc:
+          custom_package_title: "SOS Mascotas - API de Lógica y Servicios"
+          exclude:
+            - lib/vista/**/*
+            - lib/main.dart
+            - lib/firebase_options.dart
+            - lib/**/*.g.dart
+            - lib/**/*.freezed.dart
+            - lib/**/*.mocks.dart
+        EOF
 
       # 1. Generar la documentación HTML con dart doc
       - name: Generate Dart API Docs
