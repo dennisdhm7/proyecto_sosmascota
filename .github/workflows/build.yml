@@ -98,6 +98,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # 1. Instalación de Flutter y pub get (se mantienen)
       - name: Set up Flutter for Trivy
         uses: subosito/flutter-action@v2
         with:
@@ -107,8 +108,21 @@ jobs:
       - name: Generate lockfile
         run: flutter pub get
 
+      # 🛑 CORRECCIÓN CLAVE: Instalación directa del binario Trivy via APT
+      - name: Install Trivy CLI via APT
+        run: |
+          # 1. Agregar la clave GPG y el repositorio oficial de Aqua Security
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          
+          # 2. Instalar Trivy
+          sudo apt-get update
+          sudo apt-get install trivy -y
+          
+      # 🛑 EJECUCIÓN: Ahora que Trivy está en el PATH, podemos ejecutarlo.
       - name: Run Trivy vulnerability scanner (SARIF)
-        # 🛑 Generamos SARIF
         run: trivy fs . --format sarif --output trivy-report.sarif --severity CRITICAL,HIGH --ignore-unfixed
 
       - name: Upload Trivy Artifact
