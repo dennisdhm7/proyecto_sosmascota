@@ -89,31 +89,31 @@ jobs:
           path: semgrep.sarif
 
   convert-semgrep-html:
-  name: Convert Semgrep SARIF to HTML
-  runs-on: ubuntu-latest
-  needs: security-semgrep
-  steps:
-    - uses: actions/checkout@v3
+    name: Convert Semgrep SARIF to HTML
+    runs-on: ubuntu-latest
+    needs: security-semgrep
+    steps:
+      - uses: actions/checkout@v3
 
-    - name: Download SARIF Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: semgrep-sarif
-        path: .
+      - name: Download SARIF Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: semgrep-sarif
+          path: .
 
-    - name: Install SARIF Tools
-      run: |
-        python3 -m pip install --upgrade pip --break-system-packages
-        pip install sarif-tools --break-system-packages
+      - name: Install SARIF Tools
+        run: |
+          python3 -m pip install --upgrade pip --break-system-packages
+          pip install sarif-tools --break-system-packages
 
-    - name: Convert SARIF to HTML
-      run: sarif html semgrep.sarif > semgrep-report.html
+      - name: Convert SARIF to HTML
+        run: sarif html semgrep.sarif > semgrep-report.html
 
-    - name: Upload Semgrep HTML
-      uses: actions/upload-artifact@v4
-      with:
-        name: semgrep-html
-        path: semgrep-report.html
+      - name: Upload Semgrep HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-html
+          path: semgrep-report.html
 
   # -----------------------------------------------------------------
   # JOB 3: TRIVY (Genera SARIF y Sube Artefacto)
