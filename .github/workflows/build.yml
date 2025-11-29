@@ -136,19 +136,27 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # 1. Copiar el archivo lcov.info
+      # 1. Instalar el SDK de .NET
+      - name: Install .NET SDK 8.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # 2. Instalar la herramienta ReportGenerator CLI (el nombre del paquete es clave)
+      # Nota: El nombre del paquete es 'ReportGenerator' (case sensitive).
+      - name: Install ReportGenerator Tool
+        run: dotnet tool install -g ReportGenerator
+        
+      # 3. Copiar el archivo lcov.info
       - name: Copy lcov.info for ReportGenerator
         run: cp ${{ github.workspace }}/coverage/lcov.info .
-        
-      # 🛑 2. USAR LA ACCIÓN OFICIAL para instalar y ejecutar ReportGenerator
-      - name: Run ReportGenerator Action
-        uses: reportgenerator/reportgenerator-action@v2.2.0
-        with:
-          reports: 'lcov.info'
-          targetdir: 'coverage_risk_html'
-          reporttypes: 'Html'
+
+      # 4. Ejecutar ReportGenerator
+      - name: Run ReportGenerator
+        run: |
+          reportgenerator -reports:lcov.info -targetdir:coverage_risk_html -reporttypes:Html
           
-      # 3. Subir el reporte HTML como artefacto
+      # 5. Subir el artefacto
       - name: Upload Risk Report Artifact
         uses: actions/upload-artifact@v4
         with:
