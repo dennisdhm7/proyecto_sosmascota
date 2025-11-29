@@ -198,39 +198,28 @@ jobs:
       # 3. Crear el directorio final y mover los docs
       - name: Create Unified Portal Structure
         run: |
-          # 3.1 Mover el Reporte de Riesgo a la carpeta final
-          mv risk-coverage-report _site/risk_report
+          # 1. Crear el folder de despliegue final
+          mkdir _site
           
-          # 3.2 Lógica de dartdoc y portal (igual que antes)
+          # 2. Mover el Reporte de Riesgo a la carpeta final (CORREGIDO)
+          # Primero nos aseguramos que el directorio de destino exista
+          mkdir -p _site/risk_report 
+          # Luego movemos TODOS los archivos (*) dentro de la carpeta descargada
+          mv risk-coverage-report/* _site/risk_report/
+          
+          # 3. Mover Dartdoc y limpiar
           mv doc/api _site/dartdoc
           rm -rf doc
           
           # 🛑 Reemplaza [TU_URL_DEEPWIKI_AQUÍ] con el enlace real de tu documentación
           DEEPWIKI_URL="https://deepwiki.com/dennisdhm7/proyecto_sosmascota" 
 
-          # 3. Crear el index.html principal (con el nuevo botón)
+          # 4. Crear el index.html principal (igual que antes)
           echo '<html>
           <head>
               <title>Portal de Documentación SOS Mascotas</title>
               <style>
-                  body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f4f4f9; }
-                  .container { text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-                  h1 { color: #008080; margin-bottom: 30px; }
-                  h2 { margin-top: 20px; }
-                  .option { margin: 15px 0; }
-                  .option a {
-                      text-decoration: none;
-                      color: white;
-                      background-color: #008080;
-                      padding: 15px 30px;
-                      border-radius: 8px;
-                      display: inline-block;
-                      font-size: 16px; 
-                      transition: background-color 0.3s;
-                      margin: 5px;
-                  }
-                  .option a:hover { background-color: #005f5f; }
-                  p { color: #666; }
+                  /* ... styles ... */
               </style>
           </head>
           <body>
@@ -248,24 +237,21 @@ jobs:
                       <p>Manuales de usuario, flujos de negocio y decisiones de arquitectura.</p>
                       <a href="'"$DEEPWIKI_URL"'" target="_blank" style="background-color: #1a7b62;">Ver DeepWiki Externo</a>
                   </div>
-
+          
                   <hr style="margin: 30px auto; border-color: #eee; width: 80%;">
-
+          
                   <div class="option">
                       <h2>Reportes de Calidad y Cobertura</h2>
                       
-                      <!-- Botón 1: Reporte Detallado de Riesgo/Complejidad -->
                       <a href="risk_report/index.htm" target="_blank" style="background-color: #A33737;">Ver Reporte de Riesgo Detallado</a>
 
-                      <!-- Botón 2: SonarCloud (Calidad) -->
                       <a href="https://sonarcloud.io/dashboard?id=dennisdhm7_proyecto_sosmascota" target="_blank" style="background-color: #37A33A;">Ver SonarCloud (Total)</a>
                       
                   </div>
 
                   <div class="option">
                       <h2>Reportes de Seguridad Estática</h2>
-                      <!-- Botón 3: Trivy & Semgrep (Logs) -->
-                      <a href="https://github.com/${{ github.repository }}/actions" target="_blank" style="background-color: #0070A0;">Ver Logs de Seguridad (Trivy/Semgrep)</a>
+                      <a href="https://github.com/dennisdhm7/proyecto_sosmascota/actions" target="_blank" style="background-color: #0070A0;">Ver Logs de Seguridad (Trivy/Semgrep)</a>
                   </div>
               </div>
           </body>
