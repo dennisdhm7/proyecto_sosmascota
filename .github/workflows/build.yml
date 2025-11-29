@@ -205,7 +205,7 @@ jobs:
           
           # 🛑 CORRECCIÓN DE MV: Mover contenido de la carpeta de descarga al destino
           # El artefacto descargado se convirtió en una carpeta llamada 'risk-coverage-report-folder'
-          mv risk-coverage-report-folder/coverage_risk_html/* _site/risk_report/
+          mv risk-coverage-report-folder/* _site/risk_report/
           rm -rf risk-coverage-report-folder # Limpiar la carpeta temporal
           
           # 🛑 Reemplaza [TU_URL_DEEPWIKI_AQUÍ] con el enlace real de tu documentación
