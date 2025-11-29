@@ -1,0 +1,32 @@
+# dartdoc_options.yaml
+
+dartdoc:
+  ## 1. CONFIGURACIÓN DE APARIENCIA
+  
+  # 🛑 Cambia el título de la página principal (de "sos_mascotas package" a algo profesional)
+  custom_package_title: "SOS Mascotas - API de Lógica y Servicios"
+
+  # Si quieres un encabezado personalizado en el HTML
+  # custom_header: 'Documentación Oficial del Backend' 
+
+  ## 2. EXCLUSIONES (PARA LIMPIAR LA BARRA LATERAL)
+  exclude:
+    # 🛑 Excluye TODA la capa de presentación (Widgets, Pantallas, etc.).
+    # Esto soluciona el problema de listar archivos sin documentar en la barra lateral.
+    - lib/vista/**/*
+    
+    # Excluye el archivo principal de ejecución
+    - lib/main.dart
+    
+    # Excluye archivos de configuración específicos de Firebase
+    - lib/firebase_options.dart 
+
+    # Excluye archivos generados automáticamente por herramientas (MUY IMPORTANTE)
+    - lib/**/*.g.dart         # Json_serializable
+    - lib/**/*.freezed.dart   # Freezed (si lo usas)
+    - lib/**/*.mocks.dart     # Archivos de Mockito
+    - lib/**/*.config.dart    # Archivos de configuración de rutas/inyección
+
+  # 3. Archivos a escanear explícitamente (no es obligatorio, ya escanea lib por defecto)
+  # input:
+  #   - lib
