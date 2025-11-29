@@ -136,15 +136,7 @@ jobs:
     if: github.ref == 'refs/heads/main' # Solo si estamos en la rama principal
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          
-      # 🛑 DEBUG: AÑADE ESTE PASO TEMPORAL
-      - name: Debug - Verificar dartdoc_options.yaml
-        run: |
-          echo "Contenido del archivo dartdoc_options.yaml:"
-          cat dartdoc_options.yaml
-          
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -153,6 +145,21 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      # 🛑 1. ARREGLO FINAL: Sobrescribir dartdoc_options.yaml para garantizar encoding
+      - name: Ensure dartdoc_options.yaml is clean
+        run: |
+          cat << EOF > dartdoc_options.yaml
+          dartdoc:
+            custom_package_title: "SOS Mascotas - API de Lógica y Servicios"
+            exclude:
+              - lib/vista/**/*
+              - lib/main.dart
+              - lib/firebase_options.dart
+              - lib/**/*.g.dart
+              - lib/**/*.freezed.dart
+              - lib/**/*.mocks.dart
+          EOF
 
       # 1. Generar la documentación HTML con dart doc
       - name: Generate Dart API Docs
