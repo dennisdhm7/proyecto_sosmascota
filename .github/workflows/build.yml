@@ -199,14 +199,17 @@ jobs:
       # 3. Crear el directorio final y mover los docs
       - name: Create Unified Portal Structure
         run: |
+          # 1. Crear directorios
           mkdir _site
+          mkdir _site/risk_report # Aseguramos el destino
+
+          # 2. Mover el CONTENIDO del artefacto descargado a su destino final
+          # Nota: 'risk-coverage-report' es el nombre de la carpeta creada por la descarga.
+          mv risk-coverage-report/* _site/risk_report/
+          
+          # 3. Limpiar y mover Dartdoc
           mv doc/api _site/dartdoc
           rm -rf doc
-          
-          # 🛑 CORRECCIÓN DE MV: Mover contenido de la carpeta de descarga al destino
-          # El artefacto descargado se convirtió en una carpeta llamada 'risk-coverage-report-folder'
-          mv risk-coverage-report-folder/* _site/risk_report/
-          rm -rf risk-coverage-report-folder # Limpiar la carpeta temporal
           
           # 🛑 Reemplaza [TU_URL_DEEPWIKI_AQUÍ] con el enlace real de tu documentación
           DEEPWIKI_URL="https://deepwiki.com/dennisdhm7/proyecto_sosmascota" 
