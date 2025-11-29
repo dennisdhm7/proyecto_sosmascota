@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   # -----------------------------------------------------------------
-  # JOB 1: SONARCLOUD & TESTS (Calidad y Cobertura)
+  # JOB 1: SONARCLOUD & TESTS (No modificado, sigue generando lcov)
   # -----------------------------------------------------------------
   sonarcloud:
     name: SonarCloud & Tests
@@ -68,7 +68,7 @@ jobs:
             "-Dsonar.exclusions=test/**/*,lib/**/*.g.dart,lib/firebase_options.dart"
 
   # -----------------------------------------------------------------
-  # JOB 2: SEMGREP (Análisis Estático de Seguridad - SAST)
+  # JOB 2: SEMGREP (Genera SARIF y Sube Artefacto)
   # -----------------------------------------------------------------
   security-semgrep:
     name: Security - Semgrep
@@ -89,7 +89,7 @@ jobs:
           path: semgrep-report.sarif
 
   # -----------------------------------------------------------------
-  # JOB 3: TRIVY (Análisis de Dependencias - SCA)
+  # JOB 3: TRIVY (Genera SARIF y Sube Artefacto)
   # -----------------------------------------------------------------
   security-trivy:
     name: Security - Trivy (Dependencias)
@@ -114,6 +114,7 @@ jobs:
         with:
           name: trivy-sarif
           path: trivy-report.sarif
+
 
   # -----------------------------------------------------------------
   # JOB 4: GENERATE-REPORT (ReportGenerator - Complejidad)
@@ -140,8 +141,7 @@ jobs:
         run: cp ${{ github.workspace }}/coverage/lcov.info .
 
       - name: Run ReportGenerator
-        run: |
-          reportgenerator -reports:lcov.info -targetdir:coverage_risk_html -reporttypes:Html
+        run: reportgenerator -reports:lcov.info -targetdir:coverage_risk_html -reporttypes:Html
           
       - name: Upload Risk Report Artifact
         uses: actions/upload-artifact@v4
@@ -155,6 +155,7 @@ jobs:
   build-docs:
     name: Build Documentation Artifact
     runs-on: ubuntu-latest
+    # 🛑 NECESITA: Todos los jobs que generan artefactos
     needs: [sonarcloud, security-trivy, security-semgrep, generate-report]
     if: github.ref == 'refs/heads/main'
     steps:
@@ -168,41 +169,48 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-
+      
       # 1. Descargar Todos los Reportes Necesarios
       - name: Download Artifacts (Reports)
         uses: actions/download-artifact@v4
         with:
-          path: artifacts # Descarga todos los artefactos a una carpeta temporal
+          path: artifacts 
 
-      # 3. Generar documentación (ahora sí usará el archivo limpio)
-      - name: Generate Dart API Docs
-        run: dart doc .
-
-      # 4. Crear el directorio final y mover los docs
+      # 2. Crear la configuración limpia de Dartdoc y generar Docs
+      - name: Generate Dart API Docs (Cleanup & Build)
+        run: |
+          # Recrear el archivo YAML para garantizar la exclusión de vistas
+          cat << EOF > dartdoc_options.yaml
+          dartdoc:
+            custom_package_title: "SOS Mascotas - API de Lógica y Servicios"
+            exclude:
+              - lib/vista/**/*
+              - lib/main.dart
+              - lib/firebase_options.dart
+              - lib/**/*.g.dart
+          EOF
+          dart doc .
+          
+      # 3. Crear el directorio final y mover los docs y reportes SARIF
       - name: Create Unified Portal Structure
         run: |
-          # URL Fijo de DeepWiki y Sonar
-          DEEPWIKI_URL="https://deepwiki.com/dennisdhm7/proyecto_sosmascota"
-          SONAR_URL="https://sonarcloud.io/dashboard?id=dennisdhm7_proyecto_sosmascota"
-          
+          # 3.1 SETUP
           mkdir _site
-          mkdir -p _site/reports # Carpeta para SARIF y ReportGenerator
+          mkdir -p _site/reports
           
-          # Mover Dartdoc
+          # 3.2 MOVER ARCHIVOS (SARIF, DARTDOC, RISK REPORTS)
           mv doc/api _site/dartdoc
-          
-          # Mover ReportGenerator (HTML de Riesgo)
           mv artifacts/risk-coverage-report/coverage_risk_html _site/reports/risk_report
-
-          # Mover Semgrep y Trivy (SARIF)
           mv artifacts/semgrep-sarif/semgrep-report.sarif _site/reports/semgrep.sarif
           mv artifacts/trivy-sarif/trivy-report.sarif _site/reports/trivy.sarif
           
-          # Limpiar archivos de artefactos descargados
-          rm -rf artifacts
+          # Limpiar archivos temporales
+          rm -rf artifacts doc
 
-          # 5. Crear el index.html principal (EL PORTAL DE REPORTES)
+          # 3.3 VARIABLES Y GENERACIÓN DE INDEX.HTML
+          DEEPWIKI_URL="https://deepwiki.com/dennisdhm7/proyecto_sosmascota"
+          SONAR_URL="https://sonarcloud.io/dashboard?id=dennisdhm7_proyecto_sosmascota"
+          
           echo '<html>
           <head>
               <title>Portal de Reportes SOS Mascotas</title>
@@ -278,7 +286,7 @@ jobs:
   deploy-pages:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    needs: build-docs
+    needs: build-docs 
     environment:
       name: github-pages 
       url: ${{ steps.deployment.outputs.page_url }}
