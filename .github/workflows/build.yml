@@ -136,7 +136,15 @@ jobs:
     if: github.ref == 'refs/heads/main' # Solo si estamos en la rama principal
     steps:
       - uses: actions/checkout@v3
-
+        with:
+          fetch-depth: 0
+          
+      # 🛑 DEBUG: AÑADE ESTE PASO TEMPORAL
+      - name: Debug - Verificar dartdoc_options.yaml
+        run: |
+          echo "Contenido del archivo dartdoc_options.yaml:"
+          cat dartdoc_options.yaml
+          
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
