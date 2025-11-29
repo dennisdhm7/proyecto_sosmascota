@@ -124,16 +124,16 @@ jobs:
         run: |
           rm -rf .dart_tool/dartdoc/ doc/
           cat << 'EOF' > dartdoc_options.yaml
-        dartdoc:
-          custom_package_title: "SOS Mascotas - API de Lógica y Servicios"
-          exclude:
-            - lib/vista/**/*
-            - lib/main.dart
-            - lib/firebase_options.dart
-            - lib/**/*.g.dart
-            - lib/**/*.freezed.dart
-            - lib/**/*.mocks.dart
-              EOF
+dartdoc:
+  custom_package_title: "SOS Mascotas - API de Lógica y Servicios"
+  exclude:
+    - lib/vista/**/*
+    - lib/main.dart
+    - lib/firebase_options.dart
+    - lib/**/*.g.dart
+    - lib/**/*.freezed.dart
+    - lib/**/*.mocks.dart
+EOF
 
       - name: Generate Dart docs
         run: dart doc .
@@ -149,47 +149,47 @@ jobs:
           DEEPWIKI_URL="https://deepwiki.com/dennisdhm7/proyecto_sosmascota"
 
           cat > _site/index.html <<'_HTML'
-          <html>
-          <head>
-              <title>Portal de Documentación SOS Mascotas</title>
-              <style>
-                  body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f4f4f9; }
-                  .container { text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-                  h1 { color: #008080; margin-bottom: 30px; }
-                  .option { margin: 15px 0; }
-                  .option a {
-                      text-decoration: none;
-                      color: white;
-                      background-color: #008080;
-                      padding: 15px 30px;
-                      border-radius: 8px;
-                      display: inline-block;
-                      font-size: 18px;
-                      transition: background-color 0.3s;
-                  }
-                  .option a:hover { background-color: #005f5f; }
-                  p { color: #666; }
-              </style>
-          </head>
-          <body>
-              <div class="container">
-                  <h1>🐾 Portal de Documentación SOS Mascotas 🐾</h1>
-                  
-                  <div class="option">
-                      <h2>Documentación Técnica del Código (Dartdoc)</h2>
-                      <p>Estructura de clases, métodos y API interna.</p>
-                      <a href="dartdoc/index.html">Ver Dartdoc</a>
-                  </div>
-                  
-                  <div class="option">
-                      <h2>Documentación de Procesos (DeepWiki)</h2>
-                      <p>Manuales de usuario, flujos de negocio y decisiones de arquitectura.</p>
-                      <a href="${DEEPWIKI_URL}" target="_blank">Ver DeepWiki Externo</a>
-                  </div>
-              </div>
-          </body>
-          </html>
-          _HTML
+<html>
+<head>
+    <title>Portal de Documentación SOS Mascotas</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f4f4f9; }
+        .container { text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { color: #008080; margin-bottom: 30px; }
+        .option { margin: 15px 0; }
+        .option a {
+            text-decoration: none;
+            color: white;
+            background-color: #008080;
+            padding: 15px 30px;
+            border-radius: 8px;
+            display: inline-block;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+        .option a:hover { background-color: #005f5f; }
+        p { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐾 Portal de Documentación SOS Mascotas 🐾</h1>
+        
+        <div class="option">
+            <h2>Documentación Técnica del Código (Dartdoc)</h2>
+            <p>Estructura de clases, métodos y API interna.</p>
+            <a href="dartdoc/index.html">Ver Dartdoc</a>
+        </div>
+        
+        <div class="option">
+            <h2>Documentación de Procesos (DeepWiki)</h2>
+            <p>Manuales de usuario, flujos de negocio y decisiones de arquitectura.</p>
+            <a href="${DEEPWIKI_URL}" target="_blank">Ver DeepWiki Externo</a>
+        </div>
+    </div>
+</body>
+</html>
+_HTML
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
