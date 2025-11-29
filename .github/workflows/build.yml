@@ -7,6 +7,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: write # Permite checkout y subir artefactos
+  pages: write   # Permite que la acción de despliegue escriba en el repositorio
+  id-token: write # Requerido para la autenticación OIDC de Pages
+
 jobs:
   sonarcloud:
     name: SonarCloud
@@ -87,40 +92,6 @@ jobs:
       - name: Run Semgrep
         run: semgrep scan --config=p/default --config=p/security-audit --config=p/secrets
 
-  # -----------------------------------------------------------------
-  # JOB 3: SNYK (Análisis de Dependencias - SCA)
-  # Busca vulnerabilidades en los paquetes de pubspec.yaml/lock
-  # -----------------------------------------------------------------
-  security-snyk:
-    name: Security - Snyk
-    runs-on: ubuntu-latest
-    # Eliminamos 'needs' para que corra en paralelo
-    steps:
-      - uses: actions/checkout@v3
-      
-      # 1. Instalamos Flutter (Necesario para generar el lockfile correcto)
-      - name: Set up Flutter for Snyk
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          flutter-version: '3.35.2'
-          
-      # 2. Generamos el pubspec.lock (VITAL para Snyk)
-      - name: Install dependencies
-        run: flutter pub get
-
-      # 3. Instalamos Snyk CLI
-      - name: Setup Snyk
-        uses: snyk/actions/setup@master
-
-      # 4. Ejecutamos Snyk apuntando al LOCKFILE
-      # Esto es lo que soluciona el error de "Could not detect..."
-      - name: Snyk Test
-        run: snyk test --file=pubspec.lock
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true
-
 # -----------------------------------------------------------------
   # JOB 3: TRIVY (Reemplazo de Snyk para SCA - Análisis de Dependencias)
   # -----------------------------------------------------------------
@@ -152,3 +123,49 @@ jobs:
           exit-code: '0'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
+
+
+# -----------------------------------------------------------------
+  # JOB 4: DOCUMENTACIÓN - BUILD (Genera el artefacto)
+  # -----------------------------------------------------------------
+  build-docs:
+    name: Build Documentation Artifact
+    runs-on: ubuntu-latest
+    needs: [sonarcloud, security-trivy] # Solo si los checks pasan
+    if: github.ref == 'refs/heads/main' # Solo si estamos en la rama principal
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.35.2'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 1. Generar la documentación HTML
+      - name: Generate API Docs
+        run: dart doc .
+
+      # 2. Subir la carpeta 'doc/api' como artefacto de despliegue
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'doc/api' # Carpeta que generó dartdoc
+
+  # -----------------------------------------------------------------
+  # JOB 5: DOCUMENTACIÓN - DEPLOY (Publica el artefacto)
+  # -----------------------------------------------------------------
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build-docs # Espera a que la documentación haya sido construida
+    environment:
+      name: github-pages # Necesario para que la acción funcione
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
