@@ -1,5 +1,4 @@
-name: Pipeline de Calidad y Seguridad (Sonar, Semgrep, Trivy)
-
+name: Pipeline de Calidad y Seguridad (Sonar, Semgrep, Snyk)
 on:
   push:
     branches:
@@ -9,51 +8,60 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: write # Permite checkout y subir artefactos
+  pages: write   # Permite que la acción de despliegue escriba en el repositorio
+  id-token: write # Requerido para la autenticación OIDC de Pages
 
 jobs:
-  # -----------------------------------------------------------------
-  # JOB 1: SONARCLOUD & TESTS (No modificado, sigue generando lcov)
-  # -----------------------------------------------------------------
   sonarcloud:
-    name: SonarCloud & Tests
+    name: SonarCloud
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0 
+          fetch-depth: 0  # Importante para que Sonar pueda comparar versiones
 
+      # 1. Instalar Java 17 (Requerido por el escáner de Sonar)
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: 17
           distribution: 'zulu'
 
+      # 2. Instalar Flutter (TU VERSIÓN EXACTA)
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.35.2'
+          flutter-version: '3.35.2' # ✅ Actualizado a tu versión local
 
+      # 3. Descargar librerías del proyecto
       - name: Install dependencies
         run: flutter pub get
 
+      # 4. Ejecutar TODOS tus tests y generar el archivo lcov.info
       - name: Create Dummy Service Account
         run: |
           mkdir -p assets/keys
           echo '{}' > assets/keys/service_account.json
 
+      # Ejecutamos tests y generamos lcov.info
       - name: Run Tests with Coverage
         run: flutter test --coverage --dart-define=API_TOKEN="${{ secrets.API_TOKEN }}"
 
+      # Corregir rutas para que Sonar encuentre el lcov.info
       - name: Fix Coverage Paths
         run: |
+          # Reemplazar "SF:lib/" por la ruta completa del servidor
           sed -i "s|SF:lib/|SF:$GITHUB_WORKSPACE/lib/|g" coverage/lcov.info
+          
+          # (Opcional) Imprimir las primeras lineas para verificar en el log si funcionó
+          echo "--- Contenido del lcov.info (primeras 5 lineas) ---"
+          head -n 5 coverage/lcov.info
 
+      # 5. Enviar el reporte a SonarCloud
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        uses: SonarSource/sonarqube-scan-action@v6.0.0 # 👈 Actualizado a v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -68,28 +76,24 @@ jobs:
             "-Dsonar.exclusions=test/**/*,lib/**/*.g.dart,lib/firebase_options.dart"
 
   # -----------------------------------------------------------------
-  # JOB 2: SEMGREP (Genera SARIF y Sube Artefacto)
+  # JOB 2: SEMGREP (Análisis Estático de Seguridad - SAST)
+  # Busca patrones de código inseguros (hardcoded secrets, malas prácticas)
   # -----------------------------------------------------------------
   security-semgrep:
     name: Security - Semgrep
     runs-on: ubuntu-latest
+    # No necesita Flutter instalado, solo el código fuente
     container:
       image: returntocorp/semgrep
-    if: (github.actor != 'dependabot[bot]')
+    if: (github.actor != 'dependabot[bot]') # Evitar correr en PRs automáticos
     steps:
       - uses: actions/checkout@v3
       
-      - name: Run Semgrep and generate SARIF
-        run: semgrep scan --sarif --output semgrep-report.sarif --config=p/default --config=p/security-audit --config=p/secrets
+      - name: Run Semgrep
+        run: semgrep scan --config=p/default --config=p/security-audit --config=p/secrets
 
-      - name: Upload Semgrep Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: semgrep-sarif
-          path: semgrep-report.sarif
-
-  # -----------------------------------------------------------------
-  # JOB 3: TRIVY (Genera SARIF y Sube Artefacto)
+# -----------------------------------------------------------------
+  # JOB 3: TRIVY (Reemplazo de Snyk para SCA - Análisis de Dependencias)
   # -----------------------------------------------------------------
   security-trivy:
     name: Security - Trivy (Dependencias)
@@ -97,33 +101,33 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # 1. Instalación de Flutter y pub get (se mantienen)
+      # 1. Instalamos Flutter (Necesario para generar el lockfile)
       - name: Set up Flutter for Trivy
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version: '3.35.2'
 
+      # 2. Generamos el pubspec.lock FRESCO
+      # Esto asegura que el archivo exista físicamente para que Trivy lo lea
       - name: Generate lockfile
         run: flutter pub get
 
-      # 🛑 CORRECCIÓN CLAVE: Instalar el binario Trivy en el PATH
-      # Usamos la acción oficial de instalación.
-      - name: Install Trivy CLI
-        uses: aquasecurity/setup-trivy@v1 
-
-      # 🛑 EJECUCIÓN: Ahora que Trivy está en el PATH, podemos ejecutarlo.
-      - name: Run Trivy vulnerability scanner (SARIF)
-        run: trivy fs . --format sarif --output trivy-report.sarif --severity CRITICAL,HIGH --ignore-unfixed
-
-      - name: Upload Trivy Artifact
-        uses: actions/upload-artifact@v4
+      # 3. Ahora sí, Trivy encontrará el archivo
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
         with:
-          name: trivy-sarif
-          path: trivy-report.sarif
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
 
-  # -----------------------------------------------------------------
-  # JOB 4: GENERATE-REPORT (ReportGenerator - Complejidad)
+
+# -----------------------------------------------------------------
+  # JOB 4: DOCUMENTACIÓN - BUILD Y PORTAL UNIFICADO
+  # Genera el HTML de Dartdoc y crea la página de portal (Landing Page)
   # -----------------------------------------------------------------
   generate-report:
     name: Generate Detailed Risk Report
@@ -137,18 +141,23 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      # 🛑 CORRECCIÓN: Usamos el ID de paquete oficial
       - name: Install ReportGenerator Tool
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
         
       - name: Add ReportGenerator to Path
         run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
+      # 3. Copiar el archivo lcov.info
       - name: Copy lcov.info for ReportGenerator
         run: cp ${{ github.workspace }}/coverage/lcov.info .
 
+      # 4. Ejecutar ReportGenerator
       - name: Run ReportGenerator
+        # 🛑 NOTA: El comando ejecutable es 'reportgenerator', pero la instalación usa el nombre largo.
         run: reportgenerator -reports:lcov.info -targetdir:coverage_risk_html -reporttypes:Html
           
+      # 5. Subir el artefacto
       - name: Upload Risk Report Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -156,75 +165,40 @@ jobs:
           path: coverage_risk_html
 
   # -----------------------------------------------------------------
-  # JOB 5: BUILD Y PUBLICACIÓN DEL PORTAL (Consolidación)
+  # JOB 5: DOCUMENTACIÓN - BUILD Y PORTAL UNIFICADO
   # -----------------------------------------------------------------
   build-docs:
     name: Build Documentation Artifact
     runs-on: ubuntu-latest
-    # 🛑 NECESITA: Todos los jobs que generan artefactos
-    needs: [sonarcloud, security-trivy, security-semgrep, generate-report]
+    needs: [sonarcloud, security-trivy, generate-report] # Depende de todos los reportes
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          flutter-version: '3.35.2'
-
-      - name: Install dependencies
-        run: flutter pub get
-      
-      # 1. Descargar Todos los Reportes Necesarios
-      - name: Download Artifacts (Reports)
+      - name: Download Risk Report Artifact
         uses: actions/download-artifact@v4
         with:
-          path: artifacts 
-
-      # 2. Crear la configuración limpia de Dartdoc y generar Docs
-      - name: Generate Dart API Docs (Cleanup & Build)
-        run: |
-          # Recrear el archivo YAML para garantizar la exclusión de vistas
-          cat << EOF > dartdoc_options.yaml
-          dartdoc:
-            custom_package_title: "SOS Mascotas - API de Lógica y Servicios"
-            exclude:
-              - lib/vista/**/*
-              - lib/main.dart
-              - lib/firebase_options.dart
-              - lib/**/*.g.dart
-          EOF
-          dart doc .
-          
-      # 3. Crear el directorio final y mover los docs y reportes SARIF
+          name: risk-coverage-report
+          path: risk-coverage-report 
+        
       - name: Create Unified Portal Structure
         run: |
-          # 3.1 SETUP
+          # 1. Crear directorios y mover el reporte de riesgo
           mkdir _site
-          mkdir -p _site/reports
+          mkdir -p _site/risk_report 
+          mv risk-coverage-report/* _site/risk_report/
+          rm -rf risk-coverage-report # Limpiar carpeta descargada
           
-          # 3.2 MOVER ARCHIVOS (SARIF, DARTDOC, RISK REPORTS)
-          mv doc/api _site/dartdoc
-          mv artifacts/risk-coverage-report/coverage_risk_html _site/reports/risk_report
-          mv artifacts/semgrep-sarif/semgrep-report.sarif _site/reports/semgrep.sarif
-          mv artifacts/trivy-sarif/trivy-report.sarif _site/reports/trivy.sarif
-          
-          # Limpiar archivos temporales
-          rm -rf artifacts doc
-
-          # 3.3 VARIABLES Y GENERACIÓN DE INDEX.HTML
           DEEPWIKI_URL="https://deepwiki.com/dennisdhm7/proyecto_sosmascota"
-          SONAR_URL="https://sonarcloud.io/dashboard?id=dennisdhm7_proyecto_sosmascota"
-          
+
+          # 4. Crear el index.html principal (igual que antes)
           echo '<html>
           <head>
-              <title>Portal de Reportes SOS Mascotas</title>
+              <title>Portal de Documentación SOS Mascotas</title>
               <style>
                   body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f4f4f9; }
                   .container { text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
                   h1 { color: #008080; margin-bottom: 30px; }
-                  h2 { margin-top: 20px; }
                   .option { margin: 15px 0; }
                   .option a {
                       text-decoration: none;
@@ -233,9 +207,8 @@ jobs:
                       padding: 15px 30px;
                       border-radius: 8px;
                       display: inline-block;
-                      font-size: 16px;
+                      font-size: 18px;
                       transition: background-color 0.3s;
-                      margin: 5px;
                   }
                   .option a:hover { background-color: #005f5f; }
                   p { color: #666; }
@@ -243,39 +216,34 @@ jobs:
           </head>
           <body>
               <div class="container">
-                  <h1>🐾 Portal de Reportes SOS Mascotas 🐾</h1>
+                  <h1>🐾 Portal de Documentación SOS Mascotas 🐾</h1>
                   
                   <div class="option">
-                      <h2>Documentación Técnica del Código</h2>
-                      <p>Estructura de clases, métodos y API interna (Generada en vivo).</p>
+                      <h2>Documentación Técnica del Código (Dartdoc)</h2>
+                      <p>Estructura de clases, métodos y API interna.</p>
                       <a href="dartdoc/index.html" style="background-color: #008080;">Ver Dartdoc</a>
                   </div>
                   
+                  <div class="option">
+                      <h2>Documentación de Procesos (DeepWiki)</h2>
+                      <p>Manuales de usuario, flujos de negocio y decisiones de arquitectura.</p>
+                      <a href="'"$DEEPWIKI_URL"'" target="_blank" style="background-color: #1a7b62;">Ver DeepWiki Externo</a>
+                  </div>
+          
                   <hr style="margin: 30px auto; border-color: #eee; width: 80%;">
-
+          
                   <div class="option">
                       <h2>Reportes de Calidad y Cobertura</h2>
                       
-                      <a href="reports/risk_report/index.htm" target="_blank" style="background-color: #A33737;">Ver Reporte de Riesgo Detallado</a>
+                      <a href="risk_report/index.htm" target="_blank" style="background-color: #A33737;">Ver Reporte de Riesgo Detallado</a>
 
-                      <a href="'"$SONAR_URL"'" target="_blank" style="background-color: #37A33A;">Ver SonarCloud (Total)</a>
+                      <a href="https://sonarcloud.io/dashboard?id=dennisdhm7_proyecto_sosmascota" target="_blank" style="background-color: #37A33A;">Ver SonarCloud (Total)</a>
                       
                   </div>
-                  
-                  <hr style="margin: 30px auto; border-color: #eee; width: 80%;">
-                  
+
                   <div class="option">
                       <h2>Reportes de Seguridad Estática</h2>
-                      <p style="margin-bottom: 10px;">Archivos SARIF con hallazgos de seguridad:</p>
-
-                      <a href="reports/trivy.sarif" target="_blank" style="background-color: #0070A0;">Ver Reporte Trivy (SCA)</a> 
-                      
-                      <a href="reports/semgrep.sarif" target="_blank" style="background-color: #CC4400;">Ver Reporte Semgrep (SAST)</a>
-                      
-                      <hr style="margin: 15px 0; border-color: #eee;">
-                      
-                      <p style="margin-bottom: 5px;">Documentación de Procesos:</p>
-                      <a href="'"$DEEPWIKI_URL"'" target="_blank" style="background-color: #1a7b62;">Ver Procesos (DeepWiki Externo)</a>
+                      <a href="https://github.com/dennisdhm7/proyecto_sosmascota/actions" target="_blank" style="background-color: #0070A0;">Ver Logs de Seguridad (Trivy/Semgrep)</a>
                   </div>
               </div>
           </body>
@@ -292,7 +260,7 @@ jobs:
   deploy-pages:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    needs: build-docs 
+    needs: build-docs
     environment:
       name: github-pages 
       url: ${{ steps.deployment.outputs.page_url }}
