@@ -129,21 +129,40 @@ jobs:
   # JOB 4: DOCUMENTACIÓN - BUILD Y PORTAL UNIFICADO
   # Genera el HTML de Dartdoc y crea la página de portal (Landing Page)
   # -----------------------------------------------------------------
+  generate-report:
+    name: Generate Detailed Risk Report
+    runs-on: ubuntu-latest
+    needs: sonarcloud
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install .NET SDK 8.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install ReportGenerator Tool
+        run: dotnet tool install -g ReportGenerator
+      - name: Copy lcov.info for ReportGenerator
+        run: cp ${{ github.workspace }}/coverage/lcov.info .
+      - name: Run ReportGenerator
+        run: |
+          reportgenerator -reports:lcov.info -targetdir:coverage_risk_html -reporttypes:Html
+      - name: Upload Risk Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: risk-coverage-report
+          path: coverage_risk_html
+
+  # -----------------------------------------------------------------
+  # JOB 5: DOCUMENTACIÓN - BUILD Y PORTAL UNIFICADO
+  # -----------------------------------------------------------------
   build-docs:
     name: Build Documentation Artifact
     runs-on: ubuntu-latest
-    needs: [sonarcloud, security-trivy] # Solo si los checks pasan
-    if: github.ref == 'refs/heads/main' # Solo si estamos en la rama principal
+    needs: [sonarcloud, security-trivy, generate-report] # 🛑 Añadimos dependencia del reporte de riesgo
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          
-      # 🛑 DEBUG: AÑADE ESTE PASO TEMPORAL
-      - name: Debug - Verificar dartdoc_options.yaml
-        run: |
-          echo "Contenido del archivo dartdoc_options.yaml:"
-          cat dartdoc_options.yaml
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -157,21 +176,26 @@ jobs:
       - name: Generate Dart API Docs
         run: dart doc .
 
-      # 2. Crear el directorio final y mover los docs de Dart
+      # 2. Descargar el Reporte de Riesgo HTML
+      - name: Download Risk Report Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: risk-coverage-report # Nombre del artefacto subido en Job 4
+
+      # 3. Crear el directorio final y mover los docs
       - name: Create Unified Portal Structure
         run: |
-          # 2.1 Crear el directorio final que se subirá
-          mkdir _site
-          # 2.2 Mover los docs generados a un subdirectorio fijo
-          mv doc/api _site/dartdoc
+          # 3.1 Mover el Reporte de Riesgo a la carpeta final
+          mv risk-coverage-report _site/risk_report
           
-          # 2.3 ELIMINAR el enlace simbólico para evitar errores de despliegue
+          # 3.2 Lógica de dartdoc y portal (igual que antes)
+          mv doc/api _site/dartdoc
           rm -rf doc
           
           # 🛑 Reemplaza [TU_URL_DEEPWIKI_AQUÍ] con el enlace real de tu documentación
           DEEPWIKI_URL="https://deepwiki.com/dennisdhm7/proyecto_sosmascota" 
 
-          # 3. Crear el index.html principal (la página de portal)
+          # 3. Crear el index.html principal (con el nuevo botón)
           echo '<html>
           <head>
               <title>Portal de Documentación SOS Mascotas</title>
@@ -179,6 +203,7 @@ jobs:
                   body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f4f4f9; }
                   .container { text-align: center; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
                   h1 { color: #008080; margin-bottom: 30px; }
+                  h2 { margin-top: 20px; }
                   .option { margin: 15px 0; }
                   .option a {
                       text-decoration: none;
@@ -187,8 +212,9 @@ jobs:
                       padding: 15px 30px;
                       border-radius: 8px;
                       display: inline-block;
-                      font-size: 18px;
+                      font-size: 16px; 
                       transition: background-color 0.3s;
+                      margin: 5px;
                   }
                   .option a:hover { background-color: #005f5f; }
                   p { color: #666; }
@@ -201,33 +227,51 @@ jobs:
                   <div class="option">
                       <h2>Documentación Técnica del Código (Dartdoc)</h2>
                       <p>Estructura de clases, métodos y API interna.</p>
-                      <a href="dartdoc/index.html">Ver Dartdoc</a>
+                      <a href="dartdoc/index.html" style="background-color: #008080;">Ver Dartdoc</a>
                   </div>
                   
                   <div class="option">
                       <h2>Documentación de Procesos (DeepWiki)</h2>
                       <p>Manuales de usuario, flujos de negocio y decisiones de arquitectura.</p>
-                      <a href="'"$DEEPWIKI_URL"'" target="_blank">Ver DeepWiki Externo</a>
+                      <a href="'"$DEEPWIKI_URL"'" target="_blank" style="background-color: #1a7b62;">Ver DeepWiki Externo</a>
+                  </div>
+
+                  <hr style="margin: 30px auto; border-color: #eee; width: 80%;">
+
+                  <div class="option">
+                      <h2>Reportes de Calidad y Cobertura</h2>
+                      
+                      <!-- Botón 1: Reporte Detallado de Riesgo/Complejidad -->
+                      <a href="risk_report/index.htm" target="_blank" style="background-color: #A33737;">Ver Reporte de Riesgo Detallado</a>
+
+                      <!-- Botón 2: SonarCloud (Calidad) -->
+                      <a href="https://sonarcloud.io/dashboard?id=dennisdhm7_proyecto_sosmascota" target="_blank" style="background-color: #37A33A;">Ver SonarCloud (Total)</a>
+                      
+                  </div>
+
+                  <div class="option">
+                      <h2>Reportes de Seguridad Estática</h2>
+                      <!-- Botón 3: Trivy & Semgrep (Logs) -->
+                      <a href="https://github.com/${{ github.repository }}/actions" target="_blank" style="background-color: #0070A0;">Ver Logs de Seguridad (Trivy/Semgrep)</a>
                   </div>
               </div>
           </body>
           </html>' > _site/index.html
         
-      # 4. Subir la carpeta '_site' como artefacto de despliegue
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '_site' # Carpeta unificada
+          path: '_site' 
 
   # -----------------------------------------------------------------
-  # JOB 5: DOCUMENTACIÓN - DEPLOY (Publica el artefacto)
+  # JOB 6: DOCUMENTACIÓN - DEPLOY (Publica el artefacto)
   # -----------------------------------------------------------------
   deploy-pages:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    needs: build-docs # Espera a que la documentación haya sido construida
+    needs: build-docs
     environment:
-      name: github-pages # Necesario para que la acción funcione
+      name: github-pages 
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy
