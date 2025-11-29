@@ -79,11 +79,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Run Semgrep (JSON)
-        run: semgrep scan --config=p/default --config=p/security-audit --config=p/secrets --json -o semgrep.json
+      - name: Run Semgrep (SARIF)
+        run: semgrep scan --config=p/default --config=p/security-audit --config=p/secrets --sarif -o semgrep.sarif
 
-      - name: Convert Semgrep JSON to HTML
-        run: semgrep --json-to-html semgrep.json > semgrep-report.html
+      - name: Convert SARIF to HTML
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install sarif-tools
+          sarif html semgrep.sarif > semgrep-report.html
 
       - name: Upload Semgrep Artifact
         uses: actions/upload-artifact@v4
