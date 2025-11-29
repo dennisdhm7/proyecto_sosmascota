@@ -92,7 +92,6 @@ jobs:
   # Convert Semgrep SARIF → HTML
   # -----------------------------------------------------------------
   convert-semgrep-html:
-    name: Convert Semgrep SARIF to HTML
     runs-on: ubuntu-latest
     needs: security-semgrep
     steps:
@@ -106,15 +105,12 @@ jobs:
 
       - name: Install SARIF Tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y pipx
-          pipx ensurepath
-          pipx install sarif-tools
+          python3 -m pip install sarif-tools --break-system-packages
 
-      - name: Convert to HTML
-        run: sarif html semgrep.sarif > semgrep-report.html
+      - name: Convert SARIF to HTML
+        run: sarif convert semgrep.sarif --to html > semgrep-report.html
 
-      - name: Upload HTML
+      - name: Upload Semgrep HTML
         uses: actions/upload-artifact@v4
         with:
           name: semgrep-html
@@ -129,23 +125,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Trivy
+      - name: Install Trivy CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y wget apt-transport-https gnupg lsb-release
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg >/dev/null
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
           echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
           sudo apt-get update
-          sudo apt-get install trivy -y
+          sudo apt-get install -y trivy
 
       - name: Run Trivy (JSON)
         run: trivy fs . --format json --output trivy.json --severity CRITICAL,HIGH --ignore-unfixed
 
-      - name: Convert JSON → HTML
+      - name: Convert Trivy JSON to HTML
         run: |
-          echo "<html><body><h1>Reporte Trivy</h1><pre>" > trivy-report.html
+          echo '<html>
+          <head><style>body{font-family:monospace;white-space:pre-wrap;padding:20px;}</style></head>
+          <body><h1>Reporte Trivy</h1><pre>' > trivy-report.html
           cat trivy.json >> trivy-report.html
-          echo "</pre></body></html>" >> trivy-report.html
+          echo '</pre></body></html>' >> trivy-report.html
 
       - name: Upload Trivy HTML
         uses: actions/upload-artifact@v4
@@ -236,6 +234,9 @@ jobs:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     needs: build-docs
+    environment:
+      name: github-pages 
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy
         id: deployment
