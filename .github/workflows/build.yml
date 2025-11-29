@@ -162,7 +162,7 @@ jobs:
             - lib/**/*.g.dart
             - lib/**/*.freezed.dart
             - lib/**/*.mocks.dart
-        EOF
+              EOF
 
       # 1. Generar la documentación HTML con dart doc
       - name: Generate Dart API Docs
