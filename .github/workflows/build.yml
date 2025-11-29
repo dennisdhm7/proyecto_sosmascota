@@ -194,7 +194,7 @@ jobs:
                   <div class="option">
                       <h2>Documentación Técnica del Código (Dartdoc)</h2>
                       <p>Estructura de clases, métodos y API interna.</p>
-                      <a href="/dartdoc/">Ver Dartdoc</a>
+                      <a href="dartdoc/index.html">Ver Dartdoc</a>
                   </div>
                   
                   <div class="option">
