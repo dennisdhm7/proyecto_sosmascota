@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Calidad SOS Mascota</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #008080; --secondary: #005f5f; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { width: 280px; background: white; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .logo { font-size: 24px; color: var(--primary); font-weight: bold; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 15px; margin-bottom: 10px; border-radius: 8px; color: #555; text-decoration: none; display: flex; align-items: center; gap: 12px; transition: 0.3s; }
+        .nav-item:hover { background: #e6f2f2; color: var(--primary); }
+        .nav-item.active { background: var(--primary); color: white; }
+        
+        /* Main Content */
+        .content { flex: 1; padding: 40px; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; border-left: 5px solid var(--primary); }
+        .card:hover { transform: translateY(-5px); }
+        .card h3 { margin-top: 0; color: #333; }
+        .card p { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        .btn { display: inline-block; padding: 8px 20px; background: var(--primary); color: white; text-decoration: none; border-radius: 5px; font-size: 0.9em; }
+        .btn:hover { background: var(--secondary); }
+        
+        /* Status Indicators */
+        .status-badge { float: right; padding: 4px 8px; border-radius: 12px; font-size: 0.75em; font-weight: bold; }
+        .status-good { background: #d1fae5; color: #065f46; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo"><i class="fas fa-paw"></i> SOS Mascota</div>
+        <a href="#" class="nav-item active"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="https://sonarcloud.io/dashboard?id=dennisdhm7_proyecto_sosmascota" target="_blank" class="nav-item"><i class="fas fa-code"></i> SonarCloud</a>
+        <a href="https://deepwiki.com/dennisdhm7/proyecto_sosmascota" target="_blank" class="nav-item"><i class="fas fa-book"></i> DeepWiki</a>
+    </div>
+
+    <div class="content">
+        <h1>Dashboard de Calidad y Seguridad</h1>
+        <p>Estado actual del pipeline de CI/CD</p>
+        
+        <div class="card-grid">
+            <div class="card" style="border-color: #d9534f;">
+                <span class="status-badge status-good">Activo</span>
+                <h3><i class="fas fa-shield-alt"></i> Seguridad (Trivy)</h3>
+                <p>Escaneo de vulnerabilidades en dependencias y sistema de archivos.</p>
+                <a href="reports/trivy.html" target="_blank" class="btn">Ver Reporte</a>
+            </div>
+
+            <div class="card" style="border-color: #f0ad4e;">
+                <span class="status-badge status-good">Activo</span>
+                <h3><i class="fas fa-bug"></i> Análisis Estático (Semgrep)</h3>
+                <p>Detección de patrones de código inseguro y malas prácticas.</p>
+                <a href="reports/semgrep.html" target="_blank" class="btn">Ver Reporte</a>
+            </div>
+
+            <div class="card" style="border-color: #5bc0de;">
+                <h3><i class="fas fa-chart-line"></i> Cobertura de Tests</h3>
+                <p>Reporte detallado de líneas de código cubiertas por tests unitarios.</p>
+                <a href="reports/risk_report/index.htm" target="_blank" class="btn">Ver Reporte</a>
+            </div>
+
+            <div class="card">
+                <h3><i class="fab fa-dart"></i> DartDocs</h3>
+                <p>Documentación técnica generada automáticamente desde el código.</p>
+                <a href="dartdoc/index.html" target="_blank" class="btn">Ver API Docs</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
