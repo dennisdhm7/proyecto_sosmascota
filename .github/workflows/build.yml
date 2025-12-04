@@ -90,9 +90,13 @@ jobs:
 
       # 3. Convertir a HTML
       - name: Convert SARIF to HTML
-        run: sarif html semgrep.sarif > semgrep-report.html
+        run: sarif html semgrep.sarif
 
-      # 4. Subir SOLO el HTML (que es lo que importa para el portal)
+      # 4. Renombrar el archivo generado automáticamente
+      - name: Rename Output
+        run: mv semgrep.html semgrep-report.html
+
+      # 5. Subir Artefacto
       - name: Upload Semgrep HTML
         uses: actions/upload-artifact@v4
         with:
