@@ -66,21 +66,19 @@ jobs:
     if: (github.actor != 'dependabot[bot]')
     steps:
       - uses: actions/checkout@v3
+      
+      # 1. Ejecutar Semgrep (Genera el archivo .sarif)
       - name: Run Semgrep
         run: |
           docker run --rm -v "${PWD}:/src" returntocorp/semgrep \
           semgrep scan --config=p/default --config=p/security-audit --config=p/secrets --sarif -o /src/semgrep.sarif
-      - name: Install SARIF Tools
-        run: pip install sarif-tools
-      - name: Convert SARIF to HTML
-        run: sarif html semgrep.sarif
-      
-      # [MEJORA] Inyectar un título personalizado al HTML de Semgrep usando sed
-      - name: Customize Semgrep HTML
-        run: |
-          mv semgrep.html temp.html
-          sed 's|<body>|<body><div style="background:#008080;color:white;padding:15px;text-align:center"><h1>🛡️ SOS Mascota - Semgrep Report</h1></div>|' temp.html > semgrep-report.html
 
+      # 2. [CAMBIO] Convertir a HTML usando nuestro script Python personalizado
+      # Ubuntu ya trae Python instalado, así que esto corre directo.
+      - name: Convert SARIF to HTML (Custom Design)
+        run: python assets/sarif_to_html.py
+
+      # 3. Subir el reporte generado
       - name: Upload Semgrep HTML
         uses: actions/upload-artifact@v4
         with:
