@@ -27,7 +27,6 @@ lib/servicios/servicio_openai.dart
 *.bak
 *.old
 *.orig
-*.lock
 
 .DS_Store
 .atom/
