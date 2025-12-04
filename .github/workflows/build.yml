@@ -129,7 +129,7 @@ jobs:
       - name: Run Trivy (HTML)
         # Si no hay fallos críticos, Trivy a veces retorna 0 y éxito. 
         # Usamos '|| true' para asegurar que el pipeline no se detenga si trivy falla en algo trivial.
-        run: trivy fs . --format template --template "contrib/html.tpl" --output trivy-report.html --severity CRITICAL,HIGH --ignore-unfixed || true
+        run: trivy fs . --format template --template "@contrib/html.tpl" --output trivy-report.html --severity CRITICAL,HIGH --ignore-unfixed || true
 
       - name: Upload Trivy Artifact
         uses: actions/upload-artifact@v4
